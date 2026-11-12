@@ -1,0 +1,59 @@
+# .NET / ASP.NET Core
+**/bin/
+**/obj/
+**/out/
+**/artifacts/
+**/TestResults/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.pdb
+*.cache
+*.log
+*.trx
+*.coverage
+*.coveragexml
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+publish/
+*.pubxml
+*.publishsettings
+ScaffoldingReadMe.txt
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+!.env.template
+secrets.json
+appsettings.*.local.json
+*.pfx
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Angular and frontend build output
+dist/
+coverage/
+.angular/
+.nx/
+.nyc_output/
+bower_components/
+
+# JavaScript tooling caches
+.cache/
+.eslintcache
+.stylelintcache
+*.tsbuildinfo
+.sass-cache/
+
+test-console-bambusharp/**

@@ -1,0 +1,816 @@
+using BambuSharp.UI.Utilities;
+using System.ComponentModel;
+using Terminal.Gui;
+using Terminal.Gui.Trees;
+
+namespace BambuSharp.UI;
+
+/// <summary>
+/// View for displaying printer status information with live updates and expandable AMS tree.
+/// </summary>
+public class PrinterStatusView : FrameView
+{
+    private readonly TreeView _statusTreeView;
+    private LocalPrinter? _printer;
+    private readonly List<StatusItem> _rootItems = new();
+    private StatusItem? _amsRootItem;
+    private StatusItem? _extruderRootItem;
+    private StatusItem? _nozzleRootItem;
+    private StatusItem? _cameraRootItem;
+    private StatusItem? _lightsRootItem;
+    private StatusItem? _networksRootItem;
+    private StatusItem? _aiRootItem;
+    private StatusItem? _uploadStatusRootItem;
+    private StatusItem? _filesRootItem;
+    private StatusItem? _cloudStatusRootItem;
+    private bool _treeInitialized = false;
+
+    public PrinterStatusView()
+    {
+        Title = "Printer Status";
+
+        _statusTreeView = new TreeView
+        {
+            X = 0,
+            Y = 0,
+            Width = Dim.Fill(),
+            Height = Dim.Fill()
+        };
+
+        _statusTreeView.TreeBuilder = new StatusItemTreeBuilder();
+
+        // Set up color getter to apply custom colors to items
+        _statusTreeView.ColorGetter = (obj) =>
+        {
+            if (obj is StatusItem item && item.ForegroundColor.HasValue)
+            {
+                var bgColor = item.BackgroundColor ?? Color.Black;
+                var colorScheme = new ColorScheme
+                {
+                    Normal = new Terminal.Gui.Attribute(item.ForegroundColor.Value, bgColor),
+                    Focus = new Terminal.Gui.Attribute(item.ForegroundColor.Value, Color.DarkGray),
+                    HotNormal = new Terminal.Gui.Attribute(item.ForegroundColor.Value, bgColor),
+                    HotFocus = new Terminal.Gui.Attribute(item.ForegroundColor.Value, Color.DarkGray)
+                };
+                return colorScheme;
+            }
+            return null;
+        };
+
+        Add(_statusTreeView);
+
+        ShowNoSelection();
+    }
+
+    /// <summary>
+    /// Sets the printer to display status for.
+    /// </summary>
+    public void SetPrinter(LocalPrinter? printer)
+    {
+        // Unsubscribe from previous printer
+        if (_printer != null)
+        {
+            _printer.PropertyChanged -= OnPrinterPropertyChanged;
+        }
+
+        _printer = printer;
+
+        // Subscribe to new printer
+        if (_printer != null)
+        {
+            _printer.PropertyChanged += OnPrinterPropertyChanged;
+        }
+
+        // Reset tree when changing printers
+        _treeInitialized = false;
+        UpdateDisplay();
+    }
+
+    private void OnPrinterPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // Update the display on the main thread
+        Application.MainLoop.Invoke(UpdateDisplay);
+    }
+
+    private void ShowNoSelection()
+    {
+        _rootItems.Clear();
+        _statusTreeView.ClearObjects();
+        _rootItems.Add(new StatusItem("No printer selected"));
+        _statusTreeView.AddObjects(_rootItems);
+        _statusTreeView.SetNeedsDisplay();
+        _treeInitialized = true;
+    }
+
+    private void ShowWaiting()
+    {
+        _rootItems.Clear();
+        _statusTreeView.ClearObjects();
+        _rootItems.Add(new StatusItem("Waiting for printer data..."));
+        _statusTreeView.AddObjects(_rootItems);
+        _statusTreeView.SetNeedsDisplay();
+        _treeInitialized = true;
+    }
+
+    private void UpdateDisplay()
+    {
+        if (_printer == null)
+        {
+            ShowNoSelection();
+            return;
+        }
+
+        try
+        {
+            // Try to access a property to check if data is available
+            _ = _printer.State;
+
+            if (!_treeInitialized)
+            {
+                // First time initialization - build the tree structure
+                BuildTree();
+                _treeInitialized = true;
+            }
+
+            // Update existing nodes without rebuilding
+            UpdateTreeData();
+
+            _statusTreeView.SetNeedsDisplay();
+        }
+        catch (Exception)
+        {
+            ShowWaiting();
+        }
+    }
+
+    private void BuildTree()
+    {
+        _rootItems.Clear();
+        _statusTreeView.ClearObjects();
+
+        // Create basic status items
+        _rootItems.Add(new StatusItem("State: "));
+        _rootItems.Add(new StatusItem("Progress: "));
+        _rootItems.Add(new StatusItem("File: "));
+        _rootItems.Add(new StatusItem("Bed Temp: "));
+        _rootItems.Add(new StatusItem("Nozzle Temp: "));
+        _rootItems.Add(new StatusItem("Layer: "));
+        _rootItems.Add(new StatusItem("Remaining Time: "));
+
+        // Create Extruder root item
+        _extruderRootItem = new StatusItem("Extruder");
+        _rootItems.Add(_extruderRootItem);
+
+        // Add extruder details as children
+        _extruderRootItem.Children.Add(new StatusItem("Current Temp: "));
+        _extruderRootItem.Children.Add(new StatusItem("Target Temp: "));
+        _extruderRootItem.Children.Add(new StatusItem("Filament Temp: "));
+        _extruderRootItem.Children.Add(new StatusItem("Status: "));
+
+        // Create Nozzle root item
+        _nozzleRootItem = new StatusItem("Nozzle");
+        _rootItems.Add(_nozzleRootItem);
+
+        // Add nozzle details as children
+        _nozzleRootItem.Children.Add(new StatusItem("Diameter: "));
+        _nozzleRootItem.Children.Add(new StatusItem("Type: "));
+        _nozzleRootItem.Children.Add(new StatusItem("Wear: "));
+
+        // Create Camera root item
+        _cameraRootItem = new StatusItem("Camera");
+        _rootItems.Add(_cameraRootItem);
+
+        // Add camera details as children
+        _cameraRootItem.Children.Add(new StatusItem("Resolution: "));
+        _cameraRootItem.Children.Add(new StatusItem("Recording: "));
+
+        // Create Lights root item
+        _lightsRootItem = new StatusItem("Lights");
+        _rootItems.Add(_lightsRootItem);
+
+        // Build lights structure based on current printer state
+        if (_printer?.Lights != null)
+        {
+            foreach (var light in _printer.Lights)
+            {
+                var lightItem = new StatusItem($"{light.Name}: {light.Mode}");
+                _lightsRootItem.Children.Add(lightItem);
+            }
+        }
+
+        // Create Networks root item
+        _networksRootItem = new StatusItem("Networks");
+        _rootItems.Add(_networksRootItem);
+
+        // Build network structure based on current printer state
+        if (_printer?.Networks != null)
+        {
+            foreach (var network in _printer.Networks)
+            {
+                var networkItem = new StatusItem(network.ToString());
+                _networksRootItem.Children.Add(networkItem);
+            }
+        }
+
+        // Create AI root item
+        _aiRootItem = new StatusItem("AI Features");
+        _rootItems.Add(_aiRootItem);
+
+        // Add AI feature details as children
+        _aiRootItem.Children.Add(new StatusItem("Printing Monitor: "));
+        _aiRootItem.Children.Add(new StatusItem("First Layer Inspector: "));
+        _aiRootItem.Children.Add(new StatusItem("Spaghetti Detector: "));
+        _aiRootItem.Children.Add(new StatusItem("Build Plate Marker: "));
+        _aiRootItem.Children.Add(new StatusItem("Print Halt: "));
+        _aiRootItem.Children.Add(new StatusItem("Halt Sensitivity: "));
+        _aiRootItem.Children.Add(new StatusItem("Allow Skip Parts: "));
+
+        // Create Upload Status root item
+        _uploadStatusRootItem = new StatusItem("Upload Status");
+        _rootItems.Add(_uploadStatusRootItem);
+
+        // Add upload status details as children
+        _uploadStatusRootItem.Children.Add(new StatusItem("Status: "));
+        _uploadStatusRootItem.Children.Add(new StatusItem("Progress: "));
+        _uploadStatusRootItem.Children.Add(new StatusItem("Speed: "));
+        _uploadStatusRootItem.Children.Add(new StatusItem("File Size: "));
+        _uploadStatusRootItem.Children.Add(new StatusItem("Uploaded: "));
+        _uploadStatusRootItem.Children.Add(new StatusItem("Time Remaining: "));
+        _uploadStatusRootItem.Children.Add(new StatusItem("Message: "));
+
+        // Create Files root item
+        _filesRootItem = new StatusItem("Files");
+        _rootItems.Add(_filesRootItem);
+
+        // Build files structure based on current printer state
+        if (_printer?.Files != null)
+        {
+            foreach (var file in _printer.Files)
+            {
+                var fileItem = new StatusItem($"{file.Name} ({FormatBytes(file.Size)})");
+                _filesRootItem.Children.Add(fileItem);
+            }
+        }
+
+        // Create Cloud Status root item
+        _cloudStatusRootItem = new StatusItem("Cloud Status");
+        _rootItems.Add(_cloudStatusRootItem);
+
+        // Add cloud status details as children
+        _cloudStatusRootItem.Children.Add(new StatusItem("Bambu Lab Cloud: "));
+        _cloudStatusRootItem.Children.Add(new StatusItem("External Cloud: "));
+        _cloudStatusRootItem.Children.Add(new StatusItem("Protocol Version: "));
+
+        // Create AMS root item
+        _amsRootItem = new StatusItem("AMS Units");
+        _rootItems.Add(_amsRootItem);
+
+        // Build AMS structure based on current printer state
+        if (_printer?.AmsUnits != null)
+        {
+            foreach (var ams in _printer.AmsUnits)
+            {
+                var amsItem = new StatusItem($"Unit {ams.Id}");
+                _amsRootItem.Children.Add(amsItem);
+
+                foreach (var tray in ams.Trays)
+                {
+                    var trayItem = new StatusItem($"Tray {tray.Id}");
+                    amsItem.Children.Add(trayItem);
+
+                    // Add tray details as children
+                    trayItem.Children.Add(new StatusItem("Nozzle Temp: "));
+                    trayItem.Children.Add(new StatusItem("Brand: "));
+                }
+            }
+        }
+
+        _statusTreeView.AddObjects(_rootItems);
+    }
+
+    private void UpdateTreeData()
+    {
+        if (_printer == null) return;
+
+        // Update basic status items
+        var idx = 0;
+        _rootItems[idx++].Text = $"State: {_printer.State}";
+        _rootItems[idx++].Text = $"Progress: {_printer.PrintProgress}%";
+        _rootItems[idx++].Text = $"File: {(_printer.CurrentFileName != string.Empty ? _printer.CurrentFileName : "None")}";
+        _rootItems[idx++].Text = $"Bed Temp: {_printer.BedTemperature.Celsius:F1}°C";
+        _rootItems[idx++].Text = $"Nozzle Temp: {_printer.NozzleTemperature.Celsius:F1}°C";
+
+        // Layer info
+        if (_printer.TotalLayers > 0)
+        {
+            _rootItems[idx++].Text = $"Layer: {_printer.CurrentLayer}/{_printer.TotalLayers}";
+        }
+        else
+        {
+            _rootItems[idx++].Text = "Layer: N/A";
+        }
+
+        // Remaining time
+        if (_printer.RemainingMinutes > 0)
+        {
+            var remainingTime = TimeSpan.FromMinutes(_printer.RemainingMinutes);
+            _rootItems[idx++].Text = $"Remaining Time: {remainingTime.Hours}h {remainingTime.Minutes}m";
+        }
+        else
+        {
+            _rootItems[idx++].Text = "Remaining Time: N/A";
+        }
+
+        // Skip extruder, nozzle, camera, lights, networks, AI, upload status, files, and cloud status root items in main list (they're handled separately below)
+        idx += 9;
+
+        // Update Extruder data
+        if (_extruderRootItem != null)
+        {
+            if (_printer.Extruder != null)
+            {
+                _extruderRootItem.Text = $"Extruder (ID: {_printer.Extruder.Id})";
+
+                // Update extruder details
+                if (_extruderRootItem.Children.Count >= 4)
+                {
+                    _extruderRootItem.Children[0].Text = $"Current Temp: {_printer.Extruder.CurrentTemperature.Celsius:F1}°C";
+                    _extruderRootItem.Children[1].Text = $"Target Temp: {_printer.Extruder.TargetTemperature.Celsius:F1}°C";
+                    _extruderRootItem.Children[2].Text = $"Filament Temp: {_printer.Extruder.FilamentTemperature.Celsius:F1}°C";
+                    _extruderRootItem.Children[3].Text = $"Status: {_printer.Extruder.Status}";
+                }
+            }
+            else
+            {
+                _extruderRootItem.Text = "Extruder: Not detected";
+                // Clear children if no extruder data
+                if (_extruderRootItem.Children.Count >= 4)
+                {
+                    _extruderRootItem.Children[0].Text = "Current Temp: N/A";
+                    _extruderRootItem.Children[1].Text = "Target Temp: N/A";
+                    _extruderRootItem.Children[2].Text = "Filament Temp: N/A";
+                    _extruderRootItem.Children[3].Text = "Status: N/A";
+                }
+            }
+        }
+
+        // Update Nozzle data
+        if (_nozzleRootItem != null)
+        {
+            if (_printer.Nozzle != null)
+            {
+                _nozzleRootItem.Text = $"Nozzle (ID: {_printer.Nozzle.Id})";
+
+                // Update nozzle details
+                if (_nozzleRootItem.Children.Count >= 3)
+                {
+                    _nozzleRootItem.Children[0].Text = $"Diameter: {_printer.Nozzle.Diameter}mm";
+                    _nozzleRootItem.Children[1].Text = $"Type: {_printer.Nozzle.Type}";
+                    _nozzleRootItem.Children[2].Text = $"Wear: {_printer.Nozzle.WearPercent}%";
+                }
+            }
+            else
+            {
+                _nozzleRootItem.Text = "Nozzle: Not detected";
+                // Clear children if no nozzle data
+                if (_nozzleRootItem.Children.Count >= 3)
+                {
+                    _nozzleRootItem.Children[0].Text = "Diameter: N/A";
+                    _nozzleRootItem.Children[1].Text = "Type: N/A";
+                    _nozzleRootItem.Children[2].Text = "Wear: N/A";
+                }
+            }
+        }
+
+        // Update Camera data
+        if (_cameraRootItem != null)
+        {
+            if (_printer.IpCamera != null)
+            {
+                _cameraRootItem.Text = "Camera";
+
+                // Update camera details
+                if (_cameraRootItem.Children.Count >= 2)
+                {
+                    _cameraRootItem.Children[0].Text = $"Resolution: {_printer.IpCamera.Resolution}";
+                    _cameraRootItem.Children[1].Text = $"Recording: {_printer.IpCamera.RecordingSetting}";
+                }
+            }
+            else
+            {
+                _cameraRootItem.Text = "Camera: Not detected";
+                // Clear children if no camera data
+                if (_cameraRootItem.Children.Count >= 2)
+                {
+                    _cameraRootItem.Children[0].Text = "Resolution: N/A";
+                    _cameraRootItem.Children[1].Text = "Recording: N/A";
+                }
+            }
+        }
+
+        // Update Lights data
+        if (_lightsRootItem != null)
+        {
+            if (_printer.Lights?.Count > 0)
+            {
+                _lightsRootItem.Text = $"Lights ({_printer.Lights.Count})";
+
+                // Check if lights structure changed (number of lights)
+                if (_printer.Lights.Count != _lightsRootItem.Children.Count)
+                {
+                    // Rebuild tree if structure changed
+                    _treeInitialized = false;
+                    BuildTree();
+                    return;
+                }
+
+                // Update light data
+                for (int i = 0; i < _printer.Lights.Count && i < _lightsRootItem.Children.Count; i++)
+                {
+                    var light = _printer.Lights[i];
+                    var lightItem = _lightsRootItem.Children[i];
+                    lightItem.Text = $"{light.Name}: {light.Mode}";
+                }
+            }
+            else
+            {
+                _lightsRootItem.Text = "Lights: None";
+                _lightsRootItem.Children.Clear();
+            }
+        }
+
+        // Update Networks data
+        if (_networksRootItem != null)
+        {
+            if (_printer.Networks?.Count > 0)
+            {
+                _networksRootItem.Text = $"Networks ({_printer.Networks.Count})";
+
+                // Check if network structure changed (number of interfaces)
+                if (_printer.Networks.Count != _networksRootItem.Children.Count)
+                {
+                    // Rebuild tree if structure changed
+                    _treeInitialized = false;
+                    BuildTree();
+                    return;
+                }
+
+                // Update network data
+                for (int i = 0; i < _printer.Networks.Count && i < _networksRootItem.Children.Count; i++)
+                {
+                    var network = _printer.Networks[i];
+                    var networkItem = _networksRootItem.Children[i];
+                    networkItem.Text = network.ToString();
+                }
+            }
+            else
+            {
+                _networksRootItem.Text = "Networks: None";
+                _networksRootItem.Children.Clear();
+            }
+        }
+
+        // Update AI data
+        if (_aiRootItem != null)
+        {
+            if (_printer.AI != null)
+            {
+                _aiRootItem.Text = "AI Features";
+
+                // Update AI feature details
+                if (_aiRootItem.Children.Count >= 7)
+                {
+                    _aiRootItem.Children[0].Text = $"Printing Monitor: {(_printer.AI.PrintingMonitor ? "Enabled" : "Disabled")}";
+                    _aiRootItem.Children[1].Text = $"First Layer Inspector: {(_printer.AI.FirstLayerInspector ? "Enabled" : "Disabled")}";
+                    _aiRootItem.Children[2].Text = $"Spaghetti Detector: {(_printer.AI.SpaghettiDetector ? "Enabled" : "Disabled")}";
+                    _aiRootItem.Children[3].Text = $"Build Plate Marker: {(_printer.AI.BuildPlateMarkerDetector ? "Enabled" : "Disabled")}";
+                    _aiRootItem.Children[4].Text = $"Print Halt: {(_printer.AI.PrintHalt ? "Enabled" : "Disabled")}";
+                    _aiRootItem.Children[5].Text = $"Halt Sensitivity: {_printer.AI.HaltPrintSensitivity}";
+                    _aiRootItem.Children[6].Text = $"Allow Skip Parts: {(_printer.AI.AllowSkipParts ? "Yes" : "No")}";
+                }
+            }
+            else
+            {
+                _aiRootItem.Text = "AI Features: Not available";
+                // Clear children if no AI data
+                if (_aiRootItem.Children.Count >= 7)
+                {
+                    _aiRootItem.Children[0].Text = "Printing Monitor: N/A";
+                    _aiRootItem.Children[1].Text = "First Layer Inspector: N/A";
+                    _aiRootItem.Children[2].Text = "Spaghetti Detector: N/A";
+                    _aiRootItem.Children[3].Text = "Build Plate Marker: N/A";
+                    _aiRootItem.Children[4].Text = "Print Halt: N/A";
+                    _aiRootItem.Children[5].Text = "Halt Sensitivity: N/A";
+                    _aiRootItem.Children[6].Text = "Allow Skip Parts: N/A";
+                }
+            }
+        }
+
+        // Update Upload Status data
+        if (_uploadStatusRootItem != null)
+        {
+            if (_printer.UploadStatus != null)
+            {
+                _uploadStatusRootItem.Text = "Upload Status";
+
+                // Update upload status details
+                if (_uploadStatusRootItem.Children.Count >= 7)
+                {
+                    _uploadStatusRootItem.Children[0].Text = $"Status: {_printer.UploadStatus.Status}";
+                    _uploadStatusRootItem.Children[1].Text = $"Progress: {_printer.UploadStatus.Progress}%";
+
+                    // Format speed (bytes per second to MB/s or KB/s)
+                    string speedText;
+                    if (_printer.UploadStatus.Speed >= 1_000_000)
+                    {
+                        speedText = $"{_printer.UploadStatus.Speed / 1_000_000.0:F2} MB/s";
+                    }
+                    else if (_printer.UploadStatus.Speed >= 1_000)
+                    {
+                        speedText = $"{_printer.UploadStatus.Speed / 1_000.0:F2} KB/s";
+                    }
+                    else
+                    {
+                        speedText = $"{_printer.UploadStatus.Speed} B/s";
+                    }
+                    _uploadStatusRootItem.Children[2].Text = $"Speed: {speedText}";
+
+                    // Format file sizes
+                    string fileSizeText = FormatBytes(_printer.UploadStatus.FileSize);
+                    string uploadedText = FormatBytes(_printer.UploadStatus.FinishSize);
+
+                    _uploadStatusRootItem.Children[3].Text = $"File Size: {fileSizeText}";
+                    _uploadStatusRootItem.Children[4].Text = $"Uploaded: {uploadedText}";
+
+                    // Format time remaining
+                    if (_printer.UploadStatus.TimeRemaining > 0)
+                    {
+                        var timeRemaining = TimeSpan.FromSeconds(_printer.UploadStatus.TimeRemaining);
+                        if (timeRemaining.Hours > 0)
+                        {
+                            _uploadStatusRootItem.Children[5].Text = $"Time Remaining: {timeRemaining.Hours}h {timeRemaining.Minutes}m {timeRemaining.Seconds}s";
+                        }
+                        else if (timeRemaining.Minutes > 0)
+                        {
+                            _uploadStatusRootItem.Children[5].Text = $"Time Remaining: {timeRemaining.Minutes}m {timeRemaining.Seconds}s";
+                        }
+                        else
+                        {
+                            _uploadStatusRootItem.Children[5].Text = $"Time Remaining: {timeRemaining.Seconds}s";
+                        }
+                    }
+                    else
+                    {
+                        _uploadStatusRootItem.Children[5].Text = "Time Remaining: N/A";
+                    }
+
+                    _uploadStatusRootItem.Children[6].Text = $"Message: {(_printer.UploadStatus.Message != string.Empty ? _printer.UploadStatus.Message : "None")}";
+                }
+            }
+            else
+            {
+                _uploadStatusRootItem.Text = "Upload Status: No active upload";
+                // Clear children if no upload data
+                if (_uploadStatusRootItem.Children.Count >= 7)
+                {
+                    _uploadStatusRootItem.Children[0].Text = "Status: N/A";
+                    _uploadStatusRootItem.Children[1].Text = "Progress: N/A";
+                    _uploadStatusRootItem.Children[2].Text = "Speed: N/A";
+                    _uploadStatusRootItem.Children[3].Text = "File Size: N/A";
+                    _uploadStatusRootItem.Children[4].Text = "Uploaded: N/A";
+                    _uploadStatusRootItem.Children[5].Text = "Time Remaining: N/A";
+                    _uploadStatusRootItem.Children[6].Text = "Message: N/A";
+                }
+            }
+        }
+
+        // Update Files data
+        if (_filesRootItem != null)
+        {
+            if (_printer.Files?.Count > 0)
+            {
+                _filesRootItem.Text = $"Files ({_printer.Files.Count})";
+
+                // Check if file structure changed (number of files)
+                if (_printer.Files.Count != _filesRootItem.Children.Count)
+                {
+                    // Rebuild tree if structure changed
+                    _treeInitialized = false;
+                    BuildTree();
+                    return;
+                }
+
+                // Update file data
+                for (int i = 0; i < _printer.Files.Count && i < _filesRootItem.Children.Count; i++)
+                {
+                    var file = _printer.Files[i];
+                    var fileItem = _filesRootItem.Children[i];
+                    fileItem.Text = $"{file.Name} ({FormatBytes(file.Size)})";
+                }
+            }
+            else
+            {
+                _filesRootItem.Text = "Files: None";
+                _filesRootItem.Children.Clear();
+            }
+        }
+
+        // Update Cloud Status data
+        if (_cloudStatusRootItem != null)
+        {
+            if (_printer.CloudStatus != null)
+            {
+                _cloudStatusRootItem.Text = "Cloud Status";
+
+                // Update cloud status details
+                if (_cloudStatusRootItem.Children.Count >= 3)
+                {
+                    _cloudStatusRootItem.Children[0].Text = $"Bambu Lab Cloud: {(_printer.CloudStatus.BambuLabCloudConnected ? "Connected" : "Disconnected")}";
+                    _cloudStatusRootItem.Children[1].Text = $"External Cloud: {(_printer.CloudStatus.ExternalCloudConnected ? "Connected" : "Disconnected")}";
+                    _cloudStatusRootItem.Children[2].Text = $"Protocol Version: {_printer.CloudStatus.Version}";
+                }
+            }
+            else
+            {
+                _cloudStatusRootItem.Text = "Cloud Status: Not available";
+                // Clear children if no cloud status data
+                if (_cloudStatusRootItem.Children.Count >= 3)
+                {
+                    _cloudStatusRootItem.Children[0].Text = "Bambu Lab Cloud: N/A";
+                    _cloudStatusRootItem.Children[1].Text = "External Cloud: N/A";
+                    _cloudStatusRootItem.Children[2].Text = "Protocol Version: N/A";
+                }
+            }
+        }
+
+        // Update AMS data
+        if (_amsRootItem != null && _printer.AmsUnits?.Count > 0)
+        {
+            _amsRootItem.Text = $"AMS Units ({_printer.AmsUnits.Count})";
+
+            // Check if AMS structure changed (number of units or trays)
+            if (StructureChanged())
+            {
+                // Rebuild tree if structure changed
+                _treeInitialized = false;
+                BuildTree();
+                return;
+            }
+
+            // Update AMS unit data
+            for (int i = 0; i < _printer.AmsUnits.Count && i < _amsRootItem.Children.Count; i++)
+            {
+                var ams = _printer.AmsUnits[i];
+                var amsItem = _amsRootItem.Children[i];
+
+                amsItem.Text = $"Unit {ams.Id}: {ams.Temperature.Celsius:F1}°C, {ams.Humidity}% humidity";
+
+                // Update tray data
+                for (int j = 0; j < ams.Trays.Count && j < amsItem.Children.Count; j++)
+                {
+                    var tray = ams.Trays[j];
+                    var trayItem = amsItem.Children[j];
+
+                    if (!string.IsNullOrEmpty(tray.FilamentType))
+                    {
+                        // Add colored block if color is available
+                        var colorBlock = !string.IsNullOrEmpty(tray.Color)
+                            ? ColorConverter.GetColoredBlock(tray.Color)
+                            : "";
+
+                        // Get the terminal colors for this tray
+                        Color? terminalColor = null;
+                        Color? backgroundColor = null;
+
+                        if (!string.IsNullOrEmpty(tray.Color))
+                        {
+                            terminalColor = ColorConverter.HexToTerminalColor(tray.Color);
+                            backgroundColor = ColorConverter.GetContrastingBackgroundForHex(tray.Color);
+                        }
+
+                        var trayText = $"{colorBlock}Tray {tray.Id}: {tray.FilamentType}";
+                        if (!string.IsNullOrEmpty(tray.Color))
+                        {
+                            trayText += $" ({tray.Color})";
+                        }
+                        trayText += $" - {tray.RemainingPercent}% remaining ({tray.RemainingLength}mm)";
+                        trayItem.Text = trayText;
+                        trayItem.ForegroundColor = terminalColor;
+                        trayItem.BackgroundColor = backgroundColor;
+
+                        // Update tray details
+                        if (trayItem.Children.Count >= 2)
+                        {
+                            if (tray.NozzleTempMin.Celsius > 0 || tray.NozzleTempMax.Celsius > 0)
+                            {
+                                trayItem.Children[0].Text = $"Nozzle Temp: {tray.NozzleTempMin.Celsius:F0}-{tray.NozzleTempMax.Celsius:F0}°C";
+                            }
+                            else
+                            {
+                                trayItem.Children[0].Text = "Nozzle Temp: N/A";
+                            }
+
+                            if (!string.IsNullOrEmpty(tray.Brand))
+                            {
+                                trayItem.Children[1].Text = $"Brand: {tray.Brand}";
+                            }
+                            else
+                            {
+                                trayItem.Children[1].Text = "Brand: N/A";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        trayItem.Text = $"Tray {tray.Id}: Empty";
+                    }
+                }
+            }
+        }
+        else if (_amsRootItem != null)
+        {
+            _amsRootItem.Text = "AMS: Not detected";
+            _amsRootItem.Children.Clear();
+        }
+    }
+
+    private bool StructureChanged()
+    {
+        if (_printer?.AmsUnits == null || _amsRootItem == null)
+            return false;
+
+        // Check if number of AMS units changed
+        if (_printer.AmsUnits.Count != _amsRootItem.Children.Count)
+            return true;
+
+        // Check if number of trays in each unit changed
+        for (int i = 0; i < _printer.AmsUnits.Count && i < _amsRootItem.Children.Count; i++)
+        {
+            if (_printer.AmsUnits[i].Trays.Count != _amsRootItem.Children[i].Children.Count)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes >= 1_073_741_824) // 1 GB
+        {
+            return $"{bytes / 1_073_741_824.0:F2} GB";
+        }
+        else if (bytes >= 1_048_576) // 1 MB
+        {
+            return $"{bytes / 1_048_576.0:F2} MB";
+        }
+        else if (bytes >= 1_024) // 1 KB
+        {
+            return $"{bytes / 1_024.0:F2} KB";
+        }
+        else
+        {
+            return $"{bytes} B";
+        }
+    }
+
+    private class StatusItemTreeBuilder : ITreeBuilder<ITreeNode>
+    {
+        public bool SupportsCanExpand => true;
+
+        public bool CanExpand(ITreeNode toExpand)
+        {
+            return toExpand is StatusItem item && item.Children.Count > 0;
+        }
+
+        public IEnumerable<ITreeNode> GetChildren(ITreeNode forObject)
+        {
+            return forObject is StatusItem item ? item.Children : Enumerable.Empty<ITreeNode>();
+        }
+
+        public string GetText(ITreeNode model)
+        {
+            return model is StatusItem item ? item.Text : string.Empty;
+        }
+    }
+
+    private class StatusItem : ITreeNode
+    {
+        public string Text { get; set; }
+        public List<StatusItem> Children { get; } = new();
+        public Color? ForegroundColor { get; set; }
+        public Color? BackgroundColor { get; set; }
+
+        // ITreeNode implementation
+        public object? Tag { get; set; }
+        IList<ITreeNode> ITreeNode.Children => Children.Cast<ITreeNode>().ToList();
+
+        public StatusItem(string text, Color? foregroundColor = null, Color? backgroundColor = null)
+        {
+            Text = text;
+            ForegroundColor = foregroundColor;
+            BackgroundColor = backgroundColor;
+        }
+
+        public override string ToString() => Text;
+    }
+}

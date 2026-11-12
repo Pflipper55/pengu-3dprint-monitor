@@ -1,0 +1,394 @@
+using Meadow.Units;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
+
+namespace BambuSharp;
+
+/// <summary>
+/// Represents a connection to a Bambu Lab printer on the local network via MQTT.
+/// </summary>
+public class LocalPrinter : IDisposable, INotifyPropertyChanged
+{
+    private readonly PrinterMqttCommsManager _commsManager;
+    private readonly string _serialNumber;
+    private ReportInternal? _lastReport;
+
+    // Backing fields for properties
+    private Temperature _bedTemperature;
+    private Temperature _nozzleTemperature;
+    private int _printProgress;
+    private string _currentFileName = string.Empty;
+    private PrinterState _state = PrinterState.Idle;
+    private IReadOnlyList<Ams> _amsUnits = Array.Empty<Ams>();
+    private int _currentLayer;
+    private int _totalLayers;
+    private int _remainingMinutes;
+    private Extruder? _extruder;
+    private Nozzle? _nozzle;
+    private IpCamera? _ipCamera;
+    private IReadOnlyList<Light> _lights = Array.Empty<Light>();
+    private IReadOnlyList<NetworkInfo> _networks = Array.Empty<NetworkInfo>();
+    private AI? _ai;
+    private UploadStatus? _uploadStatus;
+    private IReadOnlyList<FileInfo> _files = Array.Empty<FileInfo>();
+    private CloudStatus? _cloudStatus;
+
+    /// <summary>
+    /// Occurs when a property value changes.
+    /// </summary>
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    /// <summary>
+    /// Gets a value indicating whether the object has been disposed.
+    /// </summary>
+    public bool IsDisposed { get; private set; }
+
+    /// <summary>
+    /// Gets the IP address of the printer on the local network.
+    /// </summary>
+    public string IpAddress => _commsManager.IpAddress;
+
+    /// <summary>
+    /// Gets the current heated bed temperature.
+    /// </summary>
+    public Temperature BedTemperature
+    {
+        get => _bedTemperature;
+        private set => SetProperty(ref _bedTemperature, value);
+    }
+
+    /// <summary>
+    /// Gets the current nozzle (hotend) temperature.
+    /// </summary>
+    public Temperature NozzleTemperature
+    {
+        get => _nozzleTemperature;
+        private set => SetProperty(ref _nozzleTemperature, value);
+    }
+
+    /// <summary>
+    /// Gets the print completion percentage (0-100).
+    /// </summary>
+    public int PrintProgress
+    {
+        get => _printProgress;
+        private set => SetProperty(ref _printProgress, value);
+    }
+
+    /// <summary>
+    /// Gets the name of the currently loaded or printing G-code file.
+    /// </summary>
+    public string CurrentFileName
+    {
+        get => _currentFileName;
+        private set => SetProperty(ref _currentFileName, value);
+    }
+
+    /// <summary>
+    /// Gets the current operational state of the printer.
+    /// </summary>
+    public PrinterState State
+    {
+        get => _state;
+        private set => SetProperty(ref _state, value);
+    }
+
+    /// <summary>
+    /// Gets the list of AMS (Automatic Material System) units connected to the printer.
+    /// Each AMS unit contains multiple filament trays with information about material type, color, and remaining filament.
+    /// </summary>
+    public IReadOnlyList<Ams> AmsUnits
+    {
+        get => _amsUnits;
+        private set => SetProperty(ref _amsUnits, value);
+    }
+
+    /// <summary>
+    /// Gets the current layer number being printed.
+    /// </summary>
+    public int CurrentLayer
+    {
+        get => _currentLayer;
+        private set => SetProperty(ref _currentLayer, value);
+    }
+
+    /// <summary>
+    /// Gets the total number of layers in the current print job.
+    /// </summary>
+    public int TotalLayers
+    {
+        get => _totalLayers;
+        private set => SetProperty(ref _totalLayers, value);
+    }
+
+    /// <summary>
+    /// Gets the estimated remaining time in minutes for the current print job.
+    /// </summary>
+    public int RemainingMinutes
+    {
+        get => _remainingMinutes;
+        private set => SetProperty(ref _remainingMinutes, value);
+    }
+
+    /// <summary>
+    /// Gets the primary extruder information.
+    /// Returns null if no extruder data is available.
+    /// </summary>
+    public Extruder? Extruder
+    {
+        get => _extruder;
+        private set => SetProperty(ref _extruder, value);
+    }
+
+    /// <summary>
+    /// Gets the primary nozzle information.
+    /// Returns null if no nozzle data is available.
+    /// </summary>
+    public Nozzle? Nozzle
+    {
+        get => _nozzle;
+        private set => SetProperty(ref _nozzle, value);
+    }
+
+    /// <summary>
+    /// Gets the IP camera information.
+    /// Returns null if no camera data is available.
+    /// </summary>
+    public IpCamera? IpCamera
+    {
+        get => _ipCamera;
+        private set => SetProperty(ref _ipCamera, value);
+    }
+
+    /// <summary>
+    /// Gets the list of lights (chamber light, work light, etc.).
+    /// </summary>
+    public IReadOnlyList<Light> Lights
+    {
+        get => _lights;
+        private set => SetProperty(ref _lights, value);
+    }
+
+    /// <summary>
+    /// Gets the list of network interfaces with their IP addresses and subnet masks.
+    /// </summary>
+    public IReadOnlyList<NetworkInfo> Networks
+    {
+        get => _networks;
+        private set => SetProperty(ref _networks, value);
+    }
+
+    /// <summary>
+    /// Gets the AI camera features and monitoring settings.
+    /// Returns null if no AI settings are available.
+    /// </summary>
+    public AI? AI
+    {
+        get => _ai;
+        private set => SetProperty(ref _ai, value);
+    }
+
+    /// <summary>
+    /// Gets the current file upload status and progress.
+    /// Returns null if no upload is in progress or no upload data is available.
+    /// </summary>
+    public UploadStatus? UploadStatus
+    {
+        get => _uploadStatus;
+        private set => SetProperty(ref _uploadStatus, value);
+    }
+
+    /// <summary>
+    /// Gets the list of print files available on the printer's SD card or internal storage.
+    /// </summary>
+    public IReadOnlyList<FileInfo> Files
+    {
+        get => _files;
+        private set => SetProperty(ref _files, value);
+    }
+
+    /// <summary>
+    /// Gets the cloud connectivity status of the printer.
+    /// Returns null if no cloud status data is available.
+    /// </summary>
+    public CloudStatus? CloudStatus
+    {
+        get => _cloudStatus;
+        private set => SetProperty(ref _cloudStatus, value);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LocalPrinter"/> class.
+    /// </summary>
+    /// <param name="ipAddress">The IP address of the printer on the local network.</param>
+    /// <param name="accessCode">The access code for authenticating with the printer.</param>
+    public LocalPrinter(string ipAddress, string accessCode)
+    {
+        this._serialNumber = string.Empty;
+        _commsManager = new PrinterMqttCommsManager(ipAddress, accessCode);
+        _commsManager.ReportReceived += OnPrinterReportReceived;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="LocalPrinter"/> class.
+    /// </summary>
+    /// <param name="ipAddress">The IP address of the printer on the local network.</param>
+    /// <param name="accessCode">The access code for authenticating with the printer.</param>
+    public LocalPrinter(string ipAddress, string accessCode, string serialNumber)
+    {
+        this._serialNumber = serialNumber;
+        _commsManager = new PrinterMqttCommsManager(ipAddress, accessCode);
+        _commsManager.ReportReceived += OnPrinterReportReceived;
+    }
+
+    public Task Connect(CancellationToken? cancellationToken = null)
+    {
+        // TODO: we need a state manager for online/offline state, connection retries, etc.
+
+        return _commsManager.Connect(cancellationToken, this._serialNumber);
+    }
+
+    public Task Disconnect()
+    {
+        return _commsManager.Disconnect();
+    }
+
+    private void OnPrinterReportReceived(object? sender, ReportInternal report)
+    {
+        _lastReport = report;
+
+        // Update properties from the report - SetProperty will raise PropertyChanged events
+        BedTemperature = report.Print.BedTemperature;
+        NozzleTemperature = report.Print.NozzleTemperature;
+        PrintProgress = report.Print.Percent ?? report.Print.McPercent ?? 0;
+        CurrentFileName = report.Print.GcodeFile;
+        State = report.Print.GetPrinterState() ?? State;
+        CurrentLayer = report.Print.LayerNum;
+        TotalLayers = report.Print.TotalLayerNum;
+        RemainingMinutes = report.Print.RemainTime;
+
+        // Update AMS units - create public wrappers from internal entities
+        AmsUnits = report.Print.Ams.AmsList
+            .Select(ams => new Ams(ams))
+            .ToList();
+
+        // Update extruder - use first extruder (index 0) as primary
+        var extruderInfo = report.Print.Device?.Extruder?.Info?.FirstOrDefault();
+        if (extruderInfo != null)
+        {
+            Extruder = new Extruder(extruderInfo);
+        }
+        else
+        {
+            Extruder = null;
+        }
+
+        // Update nozzle - use first nozzle (index 0) as primary
+        var nozzleInfo = report.Print.Device?.Nozzle?.Info?.FirstOrDefault();
+        if (nozzleInfo != null)
+        {
+            Nozzle = new Nozzle(nozzleInfo);
+        }
+        else
+        {
+            Nozzle = null;
+        }
+
+        // Update IP camera
+        if (report.Print.IpCam != null)
+        {
+            IpCamera = new IpCamera(report.Print.IpCam);
+        }
+        else
+        {
+            IpCamera = null;
+        }
+
+        // Update lights - create public wrappers from internal entities
+        Lights = report.Print.LightsReport
+            .Select(light => new Light(light))
+            .ToList();
+
+        // Update network interfaces
+        Networks = report.Print.Net.Info.ToList();
+
+        // Update AI settings
+        if (report.Print.XCam != null)
+        {
+            AI = new AI(report.Print.XCam);
+        }
+        else
+        {
+            AI = null;
+        }
+
+        // Update upload status
+        if (report.Print.Upload != null)
+        {
+            UploadStatus = new UploadStatus(report.Print.Upload);
+        }
+        else
+        {
+            UploadStatus = null;
+        }
+
+        // Update cloud status
+        if (report.Print.Online != null)
+        {
+            CloudStatus = new CloudStatus(report.Print.Online);
+        }
+        else
+        {
+            CloudStatus = null;
+        }
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!IsDisposed)
+        {
+            if (disposing)
+            {
+                _commsManager.Dispose();
+            }
+
+            IsDisposed = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
+    /// Raises the PropertyChanged event for the specified property.
+    /// </summary>
+    /// <param name="propertyName">The name of the property that changed.</param>
+    protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
+    /// <summary>
+    /// Sets the property value and raises PropertyChanged if the value changed.
+    /// </summary>
+    /// <typeparam name="T">The type of the property.</typeparam>
+    /// <param name="field">Reference to the backing field.</param>
+    /// <param name="value">The new value.</param>
+    /// <param name="propertyName">The name of the property (automatically provided).</param>
+    /// <returns>True if the value changed; otherwise, false.</returns>
+    protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
+    {
+        if (EqualityComparer<T>.Default.Equals(field, value))
+        {
+            return false;
+        }
+
+        field = value;
+        OnPropertyChanged(propertyName);
+        return true;
+    }
+}
