@@ -24,15 +24,18 @@ public sealed class PenguMonitorDbContext(DbContextOptions<PenguMonitorDbContext
 
             entity.HasOne(printer => printer.UsedBed)
                 .WithOne(bed => bed.InsertedPrinter)
-                .HasForeignKey<Bed>(bed => bed.PrinterId);
+                .HasForeignKey<Bed>(bed => bed.PrinterId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
             entity.HasMany(printer => printer.LoadedFilaments)
                 .WithOne(filament => filament.LoadedPrinter)
-                .HasForeignKey(filament => filament.PrinterId);
+                .HasForeignKey(filament => filament.PrinterId)
+                .OnDelete(DeleteBehavior.ClientSetNull);
 
             entity.HasMany(printer => printer.Nozzles)
                 .WithOne(nozzle => nozzle.InsertedPrinter)
-                .HasForeignKey(nozzle => nozzle.PrinterId);
+                .HasForeignKey(nozzle => nozzle.PrinterId)
+                .OnDelete(DeleteBehavior.ClientSetNull);;
         });
 
         modelBuilder.Entity<Bed>().HasKey(bed => bed.Id);

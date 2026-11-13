@@ -63,3 +63,4 @@ test-console-bambusharp/**
 *.exe*
 *.deps.json
 *.runtime*
+.DS_Store
