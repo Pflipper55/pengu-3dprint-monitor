@@ -57,3 +57,9 @@ bower_components/
 .sass-cache/
 
 test-console-bambusharp/**
+
+*.dll
+
+*.exe*
+*.deps.json
+*.runtime*
