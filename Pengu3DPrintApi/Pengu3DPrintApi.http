@@ -1,6 +1,107 @@
 @Pengu3DPrintApi_HostAddress = http://localhost:5066
+@bedId = 00000000-0000-0000-0000-000000000001
+@printerId = 00000000-0000-0000-0000-000000000002
+@filamentId = 00000000-0000-0000-0000-000000000003
+@nozzleId = 00000000-0000-0000-0000-000000000004
 
 GET {{Pengu3DPrintApi_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+### Get all beds
+GET {{Pengu3DPrintApi_HostAddress}}/Bed/all
+Accept: application/json
+
+### Get a bed by ID
+GET {{Pengu3DPrintApi_HostAddress}}/Bed/{{bedId}}
+Accept: application/json
+
+### Create a bed assigned to a printer (omit printerId to leave it unassigned)
+POST {{Pengu3DPrintApi_HostAddress}}/Bed/create
+Content-Type: application/json
+
+{
+  "brandName": "Bambu Textured PEI Plate",
+  "bedType": 1,
+  "printerId": "{{printerId}}"
+}
+
+### Update a bed and its printer assignment
+POST {{Pengu3DPrintApi_HostAddress}}/Bed/update?id={{bedId}}
+Content-Type: application/json
+
+{
+  "brandName": "Bambu Smooth PEI Plate",
+  "bedType": 2,
+  "printerId": "{{printerId}}"
+}
+
+### Delete a bed
+DELETE {{Pengu3DPrintApi_HostAddress}}/Bed/delete?id={{bedId}}
+
+### Get all filaments
+GET {{Pengu3DPrintApi_HostAddress}}/Filament/all
+Accept: application/json
+
+### Get a filament by ID
+GET {{Pengu3DPrintApi_HostAddress}}/Filament/{{filamentId}}
+Accept: application/json
+
+### Create a filament loaded on a printer (omit printerId to leave it unassigned)
+POST {{Pengu3DPrintApi_HostAddress}}/Filament/create
+Content-Type: application/json
+
+{
+  "brandName": "Generic PLA",
+  "filamentType": 1,
+  "weight": 1000,
+  "colorCode": "#FFFFFF",
+  "printerId": "{{printerId}}"
+}
+
+### Update a filament and its printer assignment
+POST {{Pengu3DPrintApi_HostAddress}}/Filament/update?id={{filamentId}}
+Content-Type: application/json
+
+{
+  "brandName": "Generic PETG",
+  "filamentType": 2,
+  "weight": 750,
+  "colorCode": "#00AEEF",
+  "printerId": "{{printerId}}"
+}
+
+### Delete a filament
+DELETE {{Pengu3DPrintApi_HostAddress}}/Filament/delete?id={{filamentId}}
+
+### Get all nozzles
+GET {{Pengu3DPrintApi_HostAddress}}/Nozzle/all
+Accept: application/json
+
+### Get a nozzle by ID
+GET {{Pengu3DPrintApi_HostAddress}}/Nozzle/{{nozzleId}}
+Accept: application/json
+
+### Create a nozzle attached to a printer (omit printerId to leave it unassigned)
+POST {{Pengu3DPrintApi_HostAddress}}/Nozzle/create
+Content-Type: application/json
+
+{
+  "isHardened": true,
+  "nozzleType": 2,
+  "printerId": "{{printerId}}"
+}
+
+### Update a nozzle and its printer assignment
+POST {{Pengu3DPrintApi_HostAddress}}/Nozzle/update?id={{nozzleId}}
+Content-Type: application/json
+
+{
+  "isHardened": false,
+  "nozzleType": 3,
+  "printerId": "{{printerId}}"
+}
+
+### Delete a nozzle
+DELETE {{Pengu3DPrintApi_HostAddress}}/Nozzle/delete?id={{nozzleId}}
