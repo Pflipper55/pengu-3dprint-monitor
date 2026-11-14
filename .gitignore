@@ -64,3 +64,5 @@ test-console-bambusharp/**
 *.deps.json
 *.runtime*
 .DS_Store
+create-angular-project.sh
+Pengu3DPrintApi/appsettings.Development.json

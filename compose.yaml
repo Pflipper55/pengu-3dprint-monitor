@@ -2,9 +2,11 @@ services:
   postgres:
     image: postgres:17-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-pengu3dprint}
-      POSTGRES_USER: ${POSTGRES_USER:-pengu}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pengu-local-password}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    env_file:
+      - ./.env
     ports:
       - '5432:5432'
     volumes:
@@ -21,9 +23,11 @@ services:
 
   pgadmin:
     image: dpage/pgadmin4:latest
+    env_file:
+      - ./.env
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@pengu.de}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-test}
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     ports:
       - '5050:80'
     volumes:
@@ -36,10 +40,30 @@ services:
       - isolated
       - public
 
+  api:
+    build:
+      context: ./Pengu3DPrintApi
+      dockerfile: Dockerfile
+    image: pengu3dprintmonitorapi:latest
+    container_name: pengu_3dprint_monitor_api
+    env_file:
+      - ./.env
+    depends_on:
+      - postgres
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENVIRONMENT}
+      - DefaultConnection=Host=postgres;Port=5432;Database=$POSTGRES_DB;Username=$POSTGRES_USER;Password=$POSTGRES_PASSWORD
+    ports:
+      - '5066:5066'
+    networks:
+      - isolated
+    restart: unless-stopped
+
 volumes:
   postgres-data:
   pgadmin-data:
 
 networks:
-  isolated: # set internal: true when production
+  isolated:
+    internal: false
   public:
