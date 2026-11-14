@@ -9,34 +9,42 @@
 
   <p-dataview [value]="this.printers()" emptyMessage="No printers have been added yet.">
     <ng-template #list let-items>
-      <div class="hidden md:grid grid-cols-4 gap-6 border-b border-surface-200 dark:border-surface-700">
+      <div
+        class="hidden md:grid grid-cols-6 gap-6 border-b border-surface-200 dark:border-surface-700"
+      >
+        <div class="py-3 text-sm font-semibold text-slate-600"></div>
         <div class="py-3 text-sm font-semibold text-slate-600">Name</div>
         <div class="py-3 text-sm font-semibold text-slate-600">Type</div>
         <div class="py-3 text-sm font-semibold text-slate-600">IP address</div>
         <div class="py-3 text-sm font-semibold text-slate-600">Firmware version</div>
+        <div class="py-3 text-sm font-semibold text-slate-600">Actions</div>
       </div>
       <div *ngFor="let printer of items">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div class="flex flex-row md:flex-col justify-between items-start gap-2">
-            <div class="text-lg font-medium text-surface-900 dark:text-surface-0 mt-2">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
+          <div class="flex flex-row md:flex-col justify-center items-start gap-2">
+            <img class="h-24 w-24 mt-2" [src]="printer.printerType | printerSvg" />
+          </div>
+          <div class="flex flex-row md:flex-col justify-center items-start gap-2">
+            <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mt-2">
               {{ printer.name }}
             </div>
           </div>
-          <div class="flex flex-row md:flex-col justify-between items-start gap-2">
-            <div class="text-lg font-medium text-surface-900 dark:text-surface-0 mt-2">
+          <div class="flex flex-row md:flex-col justify-center items-start gap-2">
+            <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mt-2">
               {{ printer.printerType | printerType }}
             </div>
           </div>
-          <div class="flex flex-row md:flex-col justify-between items-start gap-2">
-            <div class="text-lg font-medium text-surface-900 dark:text-surface-0 mt-2">
+          <div class="flex flex-row md:flex-col justify-center items-start gap-2">
+            <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mt-2">
               {{ printer.ip }}
             </div>
           </div>
-          <div class="flex flex-row md:flex-col justify-between items-start gap-2">
-            <div class="text-lg font-medium text-surface-900 dark:text-surface-0 mt-2">
+          <div class="flex flex-row md:flex-col justify-center items-start gap-2">
+            <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mt-2">
               {{ printer.firmwareVersion }}
             </div>
           </div>
+          <div class="flex flex-row md:flex-col justify-center items-start gap-2"></div>
         </div>
       </div>
     </ng-template>
