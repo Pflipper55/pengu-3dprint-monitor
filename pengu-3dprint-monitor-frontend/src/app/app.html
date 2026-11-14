@@ -1,0 +1,36 @@
+<main class="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
+  <div class="max-w-xl w-full bg-white rounded-2xl shadow-xl p-8 border border-gray-200">
+    <h1 class="text-3xl font-extrabold text-gray-900 mb-2">Angular + OptimusUI Theme.ts</h1>
+    <p class="text-gray-600 mb-6">Dein maßgeschneidertes Theme wurde über `theme.ts` geladen!</p>
+
+    <!-- Farbpaletten-Vorschau -->
+    <div class="grid grid-cols-2 gap-4 mb-8">
+      <div
+        class="p-4 rounded-xl text-white font-medium shadow-md flex items-center justify-between"
+        [style.background-color]="primaryColor"
+      >
+        <span>Primary</span>
+        <span class="text-xs opacity-80">{{ primaryColor }}</span>
+      </div>
+      <div
+        class="p-4 rounded-xl text-white font-medium shadow-md flex items-center justify-between"
+        [style.background-color]="secondaryColor"
+      >
+        <span>Secondary</span>
+        <span class="text-xs opacity-80">{{ secondaryColor }}</span>
+      </div>
+    </div>
+
+    <!-- Interaktiver Bereich mit Button -->
+    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 flex flex-col items-center gap-3">
+      <p class="text-sm text-gray-700 font-medium">{{ message() }}</p>
+      <button
+        (click)="onButtonClick()"
+        class="px-6 py-2.5 rounded-xl font-semibold text-white shadow-lg transition-transform active:scale-95 cursor-pointer"
+        [style.background-color]="primaryColor"
+      >
+        Theme testen
+      </button>
+    </div>
+  </div>
+</main>
