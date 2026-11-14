@@ -1,0 +1,11 @@
+<div>
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 id="printers-title" class="text-xl font-semibold">Printers</h2>
+      <p class="mt-1 text-sm text-slate-600">View your printers.</p>
+    </div>
+    <p-button label="Add printer" />
+  </div>
+
+  <p-dataview [value]="[]" emptyMessage="No printers have been added yet." />
+</div>

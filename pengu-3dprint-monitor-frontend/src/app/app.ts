@@ -1,20 +1,12 @@
-import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule],
+  imports: [RouterOutlet],
   changeDetection: ChangeDetectionStrategy.Eager,
   templateUrl: './app.html',
 })
 export class App {
-  primaryColor = '#00A676';
-  secondaryColor = '#222222';
-
-  message = signal('Klicke auf den Button, um das Theme zu testen!');
-
-  onButtonClick() {
-    this.message.set('🎉 Perfekt! Deine Custom theme.ts greift fehlerfrei.');
-  }
 }

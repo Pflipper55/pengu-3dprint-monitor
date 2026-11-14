@@ -1,0 +1,11 @@
+<div>
+  <div class="mb-5 flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 id="beds-title" class="text-xl font-semibold">Beds</h2>
+      <p class="mt-1 text-sm text-slate-600">View your beds.</p>
+    </div>
+    <p-button label="Add bed" />
+  </div>
+
+  <p-dataview [value]="[]" emptyMessage="No beds have been added yet." />
+</div>
