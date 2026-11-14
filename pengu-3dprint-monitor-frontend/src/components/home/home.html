@@ -4,10 +4,11 @@
       class="w-full border-b border-slate-200 p-5 md:min-h-screen md:w-64 md:border-b-0 md:border-r"
     >
       <div class="mb-8 flex items-center gap-3 text-xl font-semibold">
-        <span class="flex size-10 items-center justify-center rounded-xl bg-emerald-600 text-white">
-          P
-        </span>
-        <span>Pengu Monitor</span>
+        <img
+          class="flex size-14 items-center justify-center rounded-xl bg-transparent"
+          src="/assets/icon.svg"
+        />
+        <span>Pengu3DMonitor</span>
       </div>
 
       <p class="mb-3 px-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
@@ -26,10 +27,22 @@
 
       <p-tabs [value]="activeTab()">
         <p-tablist>
-          <p-tab value="printers" routerLink="/printers">Printers</p-tab>
-          <p-tab value="nozzles" routerLink="/nozzles">Nozzles</p-tab>
-          <p-tab value="filaments" routerLink="/filaments">Filaments</p-tab>
-          <p-tab value="beds" routerLink="/beds">Beds</p-tab>
+          <p-tab value="printers" routerLink="/printers">
+            <i class="pi pi-print"></i>
+            Printers
+          </p-tab>
+          <p-tab value="nozzles" routerLink="/nozzles">
+            <i class="pi pi-sort-down"></i>
+            Nozzles
+          </p-tab>
+          <p-tab value="filaments" routerLink="/filaments">
+            <i class="pi pi-palette"></i>
+            Filaments
+          </p-tab>
+          <p-tab value="beds" routerLink="/beds">
+            <i class="pi pi-stop"></i>
+            Beds
+          </p-tab>
         </p-tablist>
         <p-tabpanels>
           <p-tabpanel [value]="activeTab()">
