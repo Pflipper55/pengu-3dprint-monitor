@@ -44,7 +44,16 @@
               {{ printer.firmwareVersion }}
             </div>
           </div>
-          <div class="flex flex-row md:flex-col justify-center items-start gap-2"></div>
+          <div class="flex flex-row items-center gap-2">
+            <p-button icon="pi pi-info" [size]="'small'" [severity]="'info'" [rounded]="true" />
+            <p-button
+              icon="pi pi-pencil"
+              [size]="'small'"
+              [severity]="'secondary'"
+              [rounded]="true"
+            />
+            <p-button icon="pi pi-trash" [size]="'small'" [rounded]="true" [severity]="'danger'" />
+          </div>
         </div>
       </div>
     </ng-template>
