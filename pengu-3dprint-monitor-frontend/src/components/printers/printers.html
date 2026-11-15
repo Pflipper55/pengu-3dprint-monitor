@@ -7,44 +7,36 @@
     <p-button label="Add printer" />
   </div>
 
-  <p-dataview [value]="this.printers()" emptyMessage="No printers have been added yet.">
-    <ng-template #list let-items>
-      <div
-        class="hidden md:grid grid-cols-6 gap-6 border-b border-surface-200 dark:border-surface-700"
-      >
-        <div class="py-3 text-sm font-semibold text-slate-600"></div>
-        <div class="py-3 text-sm font-semibold text-slate-600">Name</div>
-        <div class="py-3 text-sm font-semibold text-slate-600">Type</div>
-        <div class="py-3 text-sm font-semibold text-slate-600">IP address</div>
-        <div class="py-3 text-sm font-semibold text-slate-600">Firmware version</div>
-        <div class="py-3 text-sm font-semibold text-slate-600">Actions</div>
-      </div>
-      <div *ngFor="let printer of items">
-        <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
-          <div class="flex flex-row md:flex-col justify-center items-start gap-2">
-            <img class="h-24 w-24 mt-2" [src]="printer.printerType | printerSvg" />
-          </div>
-          <div class="flex flex-row md:flex-col justify-center items-start gap-2">
-            <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mt-2">
-              {{ printer.name }}
-            </div>
-          </div>
-          <div class="flex flex-row md:flex-col justify-center items-start gap-2">
-            <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mt-2">
-              {{ printer.printerType | printerType }}
-            </div>
-          </div>
-          <div class="flex flex-row md:flex-col justify-center items-start gap-2">
-            <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mt-2">
-              {{ printer.ip }}
-            </div>
-          </div>
-          <div class="flex flex-row md:flex-col justify-center items-start gap-2">
-            <div class="text-sm font-medium text-surface-900 dark:text-surface-0 mt-2">
-              {{ printer.firmwareVersion }}
-            </div>
-          </div>
-          <div class="flex flex-row items-center gap-2">
+  <p-table [value]="printers()" [tableStyle]="{ 'min-width': '50rem' }">
+    <ng-template #header>
+      <tr>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600"></th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Name</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Type</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">IP address</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Firmware version</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-printer>
+      <tr>
+        <td class="py-3">
+          <img class="h-12 w-12" [src]="printer.printerType | printerSvg" [alt]="printer.name" />
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ printer.name }}
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ printer.printerType | printerType }}
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ printer.ip }}
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ printer.firmwareVersion }}
+        </td>
+        <td class="py-3">
+          <div class="flex items-center gap-2">
             <p-button icon="pi pi-info" [size]="'small'" [severity]="'info'" [rounded]="true" />
             <p-button
               icon="pi pi-pencil"
@@ -54,8 +46,15 @@
             />
             <p-button icon="pi pi-trash" [size]="'small'" [rounded]="true" [severity]="'danger'" />
           </div>
-        </div>
-      </div>
+        </td>
+      </tr>
     </ng-template>
-  </p-dataview>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6" class="py-4 text-center text-sm text-slate-600">
+          No printers have been added yet.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
 </div>

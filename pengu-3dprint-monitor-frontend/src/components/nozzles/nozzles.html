@@ -7,5 +7,21 @@
     <p-button label="Add nozzle" />
   </div>
 
-  <p-dataview [value]="[]" emptyMessage="No nozzles have been added yet." />
+  <p-table [value]="[]" [tableStyle]="{ 'min-width': '40rem' }">
+    <ng-template #header>
+      <tr>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Nozzle type</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Hardened</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Printer</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="4" class="py-4 text-center text-sm text-slate-600">
+          No nozzles have been added yet.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
 </div>

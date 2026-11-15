@@ -7,5 +7,23 @@
     <p-button label="Add filament" />
   </div>
 
-  <p-dataview [value]="[]" emptyMessage="No filaments have been added yet." />
+  <p-table [value]="[]" [tableStyle]="{ 'min-width': '50rem' }">
+    <ng-template #header>
+      <tr>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Brand</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Filament type</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Weight</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Color</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Printer</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="6" class="py-4 text-center text-sm text-slate-600">
+          No filaments have been added yet.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
 </div>

@@ -7,5 +7,21 @@
     <p-button label="Add bed" />
   </div>
 
-  <p-dataview [value]="[]" emptyMessage="No beds have been added yet." />
+  <p-table [value]="[]" [tableStyle]="{ 'min-width': '40rem' }">
+    <ng-template #header>
+      <tr>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Brand</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Bed type</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Printer</th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template #emptymessage>
+      <tr>
+        <td colspan="4" class="py-4 text-center text-sm text-slate-600">
+          No beds have been added yet.
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
 </div>

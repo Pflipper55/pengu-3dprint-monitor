@@ -1,16 +1,15 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { ButtonModule } from '@openng/optimus-ui/button';
-import { DataViewModule } from '@openng/optimus-ui/dataview';
+import { TableModule } from '@openng/optimus-ui/table';
 import { ApiPrinterService } from '../../services/api-printer-service';
 import { PrinterOverviewModel } from '../../models/printer/printer-overview-model';
-import { CommonModule } from '@angular/common';
 import { PrinterTypePipe } from '../../pipes/printer-type-pipe';
 import { PrinterSvgPipe } from '../../pipes/printer-svg-pipe';
 
 @Component({
   selector: 'app-printers',
   standalone: true,
-  imports: [CommonModule, ButtonModule, DataViewModule, PrinterTypePipe, PrinterSvgPipe],
+  imports: [ButtonModule, TableModule, PrinterTypePipe, PrinterSvgPipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './printers.html',
 })
