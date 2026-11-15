@@ -1,0 +1,75 @@
+<p-dialog
+  [header]="this.printerDetails().name"
+  [appendTo]="'body'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '25rem' }"
+>
+  <img
+    class="w-36 h-36 justify-self-center"
+    [src]="this.printerDetails().printerType | printerSvg"
+    [alt]="this.printerDetails().name"
+  />
+  <div class="mt-6 flex flex-col divide-y divide-gray-300">
+    <div class="flex flex-row justify-between items-center py-2">
+      <p class="font-semibold">Name</p>
+      <p class="text-muted-color text-sm">{{ this.printerDetails().name }}</p>
+    </div>
+
+    <div class="flex flex-row justify-between items-center py-2">
+      <p class="font-semibold">Type of printer</p>
+      <p class="text-muted-color text-sm">{{ this.printerDetails().printerType | printerType }}</p>
+    </div>
+
+    <div class="flex flex-row justify-between items-center py-2">
+      <p class="font-semibold">IP</p>
+      <p class="text-muted-color text-sm">{{ this.printerDetails().ip }}</p>
+    </div>
+
+    <div class="flex flex-row justify-between items-center py-2">
+      <p class="font-semibold">Access code</p>
+      <p class="text-muted-color text-sm">{{ this.printerDetails().accessCode }}</p>
+    </div>
+
+    <div class="flex flex-row justify-between items-center py-2">
+      <p class="font-semibold">Printing hours</p>
+      <p class="text-muted-color text-sm">{{ this.printerDetails().printingHours }}h</p>
+    </div>
+
+    <div class="flex flex-row justify-between items-center py-2">
+      <p class="font-semibold">Firmware version</p>
+      <p class="text-muted-color text-sm">{{ this.printerDetails().firmwareVersion }}</p>
+    </div>
+    @if (this.printerDetails().nozzles.length !== 0) {
+      <div class="flex flex-row justify-between py-2">
+        <p class="font-semibold">Nozzles</p>
+        <div class="flex flex-col">
+          @for (nozzle of this.printerDetails().nozzles; track nozzle.id) {
+            <div class="flex flex-col justify-end items-end" [class.mt-4]="!$first">
+              <p class="text-muted-color text-sm max-w-32 text-right">
+                {{ nozzle.id }}
+              </p>
+              <p class="text-muted-color text-sm">{{ nozzle.nozzleType | nozzleType }}</p>
+              <p class="text-muted-color text-sm">{{ nozzle.isHardened | nozzleHardened }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+    @if (this.printerDetails().loadedFilaments.length !== 0) {
+      <div class="flex flex-row justify-between py-2">
+        <p class="font-semibold">Loaded filaments</p>
+        <div class="flex flex-col">
+          @for (filament of this.printerDetails().loadedFilaments; track filament.id) {
+            <div class="flex flex-col justify-end items-end" [class.mt-4]="!$first">
+              <p class="text-muted-color text-sm">{{ filament.brandName }}</p>
+              <p class="text-muted-color text-sm">{{ filament.filamentType | filamentType }}</p>
+              <p class="text-muted-color text-sm">{{ filament.weight }} g</p>
+              <p class="text-muted-color text-sm">{{ filament.colorCode }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</p-dialog>
