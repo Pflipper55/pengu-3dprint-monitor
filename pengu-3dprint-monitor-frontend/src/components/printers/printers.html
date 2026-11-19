@@ -7,14 +7,48 @@
     <p-button label="Add printer" (onClick)="showCreatePrinter()" />
   </div>
 
-  <p-table [value]="printers()" [tableStyle]="{ 'min-width': '50rem' }">
+  <p-table
+    #printerTable
+    [value]="printers()"
+    [globalFilterFields]="['name', 'ip', 'firmwareVersion']"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [sortMode]="'multiple'"
+    [tableStyle]="{ 'min-width': '50rem' }"
+  >
+    <ng-template #caption>
+      <div class="flex justify-end pb-3">
+        <input
+          pInputText
+          type="text"
+          placeholder="Search printers"
+          aria-label="Search printers"
+          (input)="filterPrinters(printerTable, $event)"
+        />
+      </div>
+    </ng-template>
     <ng-template #header>
       <tr>
         <th class="py-3 text-left text-sm font-semibold text-slate-600"></th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Name</th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Type</th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">IP address</th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Firmware version</th>
+        <th pSortableColumn="name" class="py-3 text-left text-sm font-semibold text-slate-600">
+          Name <p-sortIcon field="name" />
+        </th>
+        <th
+          pSortableColumn="printerType"
+          class="py-3 text-left text-sm font-semibold text-slate-600"
+        >
+          Type <p-sortIcon field="printerType" />
+        </th>
+        <th pSortableColumn="ip" class="py-3 text-left text-sm font-semibold text-slate-600">
+          IP address <p-sortIcon field="ip" />
+        </th>
+        <th
+          pSortableColumn="firmwareVersion"
+          class="py-3 text-left text-sm font-semibold text-slate-600"
+        >
+          Firmware version <p-sortIcon field="firmwareVersion" />
+        </th>
         <th class="py-3 text-left text-sm font-semibold text-slate-600">Actions</th>
       </tr>
     </ng-template>
@@ -49,8 +83,15 @@
               [size]="'small'"
               [severity]="'secondary'"
               [rounded]="true"
+              (onClick)="showEditPrinter(printer.id)"
             />
-            <p-button icon="pi pi-trash" [size]="'small'" [rounded]="true" [severity]="'danger'" />
+            <p-button
+              icon="pi pi-trash"
+              [size]="'small'"
+              [rounded]="true"
+              [severity]="'danger'"
+              (onClick)="confirmDeletePrinter(printer)"
+            />
           </div>
         </td>
       </tr>
@@ -65,5 +106,7 @@
   </p-table>
   <app-printer-details-modal></app-printer-details-modal>
   <app-create-printer-modal (printerCreated)="loadPrinters()"></app-create-printer-modal>
+  <app-edit-printer-modal (printerUpdated)="loadPrinters()"></app-edit-printer-modal>
+  <p-confirmDialog />
   <p-toast />
 </div>

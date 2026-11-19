@@ -85,5 +85,17 @@ export const AppTheme = definePreset(Aura, {
         selectedFocusColor: '{primary.contrastColor}',
       },
     },
+    paginator: {
+      navButton: {
+        selectedBackground: '{primary.color}',
+        selectedColor: '{primary.contrastColor}',
+      },
+    },
+    datatable: {
+      headerCell: {
+        selectedBackground: '{primary.color}',
+        selectedColor: '{primary.contrastColor}',
+      },
+    },
   },
 });

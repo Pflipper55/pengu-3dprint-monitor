@@ -3,7 +3,7 @@
   [appendTo]="'body'"
   [modal]="true"
   [(visible)]="visible"
-  [style]="{ width: '25rem' }"
+  [style]="{ width: '30rem' }"
 >
   <img
     class="w-36 h-36 justify-self-center"
@@ -40,28 +40,40 @@
       <p class="font-semibold">Firmware version</p>
       <p class="text-muted-color text-sm">{{ this.printerDetails().firmwareVersion }}</p>
     </div>
-    @if (this.printerDetails().nozzles.length !== 0) {
-      <div class="flex flex-row justify-between py-2">
-        <p class="font-semibold">Nozzles</p>
-        <div class="flex flex-col">
+    <div class="flex flex-row justify-between gap-4 py-2">
+      <p class="font-semibold">Bed</p>
+      @if (this.printerDetails().usedBed; as bed) {
+        <div class="flex flex-col items-end">
+          <p class="text-muted-color text-sm">{{ bed.brandName }}</p>
+          <p class="text-muted-color text-sm">{{ bed.bedType | bedType }}</p>
+        </div>
+      } @else {
+        <p class="text-muted-color text-sm">None assigned</p>
+      }
+    </div>
+
+    <div class="flex flex-row justify-between gap-4 py-2">
+      <p class="font-semibold">Nozzles</p>
+      @if (this.printerDetails().nozzles.length > 0) {
+        <div class="flex flex-col items-end">
           @for (nozzle of this.printerDetails().nozzles; track nozzle.id) {
-            <div class="flex flex-col justify-end items-end" [class.mt-4]="!$first">
-              <p class="text-muted-color text-sm max-w-32 text-right">
-                {{ nozzle.id }}
-              </p>
+            <div class="flex flex-col items-end" [class.mt-4]="!$first">
               <p class="text-muted-color text-sm">{{ nozzle.nozzleType | nozzleType }}</p>
               <p class="text-muted-color text-sm">{{ nozzle.isHardened | nozzleHardened }}</p>
             </div>
           }
         </div>
-      </div>
-    }
-    @if (this.printerDetails().loadedFilaments.length !== 0) {
-      <div class="flex flex-row justify-between py-2">
-        <p class="font-semibold">Loaded filaments</p>
-        <div class="flex flex-col">
+      } @else {
+        <p class="text-muted-color text-sm">None assigned</p>
+      }
+    </div>
+
+    <div class="flex flex-row justify-between gap-4 py-2">
+      <p class="font-semibold">Loaded filaments</p>
+      @if (this.printerDetails().loadedFilaments.length > 0) {
+        <div class="flex flex-col items-end">
           @for (filament of this.printerDetails().loadedFilaments; track filament.id) {
-            <div class="flex flex-col justify-end items-end" [class.mt-4]="!$first">
+            <div class="flex flex-col items-end" [class.mt-4]="!$first">
               <p class="text-muted-color text-sm">{{ filament.brandName }}</p>
               <p class="text-muted-color text-sm">{{ filament.filamentType | filamentType }}</p>
               <p class="text-muted-color text-sm">{{ filament.weight }} g</p>
@@ -69,7 +81,9 @@
             </div>
           }
         </div>
-      </div>
-    }
+      } @else {
+        <p class="text-muted-color text-sm">None assigned</p>
+      }
+    </div>
   </div>
 </p-dialog>

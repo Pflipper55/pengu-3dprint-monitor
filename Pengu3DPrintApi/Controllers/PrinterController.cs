@@ -109,16 +109,13 @@ public class PrinterController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.Conflict)]
-    public async Task<ActionResult> Create(
-        CreatePrinterRequest request,
-        CancellationToken cancellationToken)
+    public async Task<ActionResult> Create(CreatePrinterRequest request)
     {
         // Add Auth when needed
         this._logger.LogInformation("PrinterController - Creating printer with name: {name}", request.Name);
         var printerExists = await _context.Printers.AnyAsync(
             printer => string.Compare(request.Name, printer.Name) == 0
-                || printer.IP.Equals(request.Ip),
-            cancellationToken);
+                || printer.IP.Equals(request.Ip));
 
         if (printerExists)
         {
@@ -146,8 +143,7 @@ public class PrinterController : ControllerBase
 
         var bed = request.BedId.HasValue
             ? await _context.Beds.SingleOrDefaultAsync(
-                item => item.Id == request.BedId.Value,
-                cancellationToken)
+                item => item.Id == request.BedId.Value)
             : null;
 
         if (request.BedId.HasValue && bed is null)
@@ -172,7 +168,7 @@ public class PrinterController : ControllerBase
 
         var nozzles = await _context.Nozzles
             .Where(item => nozzleIds.Contains(item.Id))
-            .ToListAsync(cancellationToken);
+            .ToListAsync();
 
         if (nozzles.Count != nozzleIds.Count)
         {
@@ -196,7 +192,7 @@ public class PrinterController : ControllerBase
 
         var filaments = await _context.Filaments
             .Where(item => filamentIds.Contains(item.Id))
-            .ToListAsync(cancellationToken);
+            .ToListAsync();
 
         if (filaments.Count != filamentIds.Count)
         {
@@ -237,7 +233,7 @@ public class PrinterController : ControllerBase
         try
         {
             _context.Printers.Add(entity);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _context.SaveChangesAsync();
 
             this._logger.LogInformation("PrinterController - Printer successfully added.");
             return this.Ok();
@@ -252,11 +248,22 @@ public class PrinterController : ControllerBase
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.Conflict)]
-    public async Task<ActionResult> Update(UpdatePrinterRequest request, string id)
+    public async Task<ActionResult> Update(
+        UpdatePrinterRequest request,
+        string id)
     {
         // Add Auth when needed
         this._logger.LogInformation("PrinterController - Updating printer with id: {id}", id);
-        var result = _context.Printers.Where((printer) => printer.Id.CompareTo(Guid.Parse(id)) == 0).SingleOrDefault();
+        if (!Guid.TryParse(id, out var printerId))
+        {
+            return this.BadRequest();
+        }
+
+        var result = await _context.Printers
+            .Include(printer => printer.UsedBed)
+            .Include(printer => printer.Nozzles)
+            .Include(printer => printer.LoadedFilaments)
+            .SingleOrDefaultAsync(printer => printer.Id == printerId);
 
         if(result is null)
         {
@@ -264,8 +271,10 @@ public class PrinterController : ControllerBase
             return this.BadRequest();
         }
 
-        var doesExists = _context.Printers.Where((printer) => string.Compare(request.Name, printer.Name) == 0 
-            || printer.IP.Equals(request.Ip)).Any();
+        var doesExists = await _context.Printers.AnyAsync(
+            printer => printer.Id != printerId
+                && (string.Compare(request.Name, printer.Name) == 0
+                    || printer.IP.Equals(request.Ip)));
 
         if(doesExists)
         {
@@ -273,23 +282,162 @@ public class PrinterController : ControllerBase
             return this.Conflict();
         }
 
+        var bed = request.BedId.HasValue
+            ? await _context.Beds.SingleOrDefaultAsync(
+                item => item.Id == request.BedId.Value)
+            : null;
+
+        if (request.BedId.HasValue && bed is null)
+        {
+            return this.BadRequest(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "Bed not found",
+                Detail = "The selected bed does not exist."
+            });
+        }
+
+        if (bed?.PrinterId is not null && bed.PrinterId != printerId)
+        {
+            return this.Conflict(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.Conflict,
+                Title = "Bed already assigned",
+                Detail = "The selected bed is already assigned to another printer."
+            });
+        }
+
+        var nozzleIds = request.NozzleIds;
+        if (nozzleIds is not null && nozzleIds.Count != nozzleIds.Distinct().Count())
+        {
+            return this.BadRequest(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "Duplicate nozzle selection",
+                Detail = "Nozzle IDs must be unique."
+            });
+        }
+
+        var nozzles = nozzleIds is null
+            ? null
+            : await _context.Nozzles
+                .Where(item => nozzleIds.Contains(item.Id))
+                .ToListAsync();
+
+        if (nozzles is not null && nozzles.Count != nozzleIds!.Count)
+        {
+            return this.BadRequest(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "Nozzle not found",
+                Detail = "One or more selected nozzles do not exist."
+            });
+        }
+
+        if (nozzles?.Any(item => item.PrinterId is not null && item.PrinterId != printerId) == true)
+        {
+            return this.Conflict(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.Conflict,
+                Title = "Nozzle already assigned",
+                Detail = "One or more selected nozzles are already assigned to another printer."
+            });
+        }
+
+        var filamentIds = request.FilamentIds;
+        if (filamentIds is not null && filamentIds.Count != filamentIds.Distinct().Count())
+        {
+            return this.BadRequest(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "Duplicate filament selection",
+                Detail = "Filament IDs must be unique."
+            });
+        }
+
+        var filaments = filamentIds is null
+            ? null
+            : await _context.Filaments
+                .Where(item => filamentIds.Contains(item.Id))
+                .ToListAsync();
+
+        if (filaments is not null && filaments.Count != filamentIds!.Count)
+        {
+            return this.BadRequest(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "Filament not found",
+                Detail = "One or more selected filaments do not exist."
+            });
+        }
+
+        if (filaments?.Any(item => item.PrinterId is not null && item.PrinterId != printerId) == true)
+        {
+            return this.Conflict(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.Conflict,
+                Title = "Filament already assigned",
+                Detail = "One or more selected filaments are already assigned to another printer."
+            });
+        }
+
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
+            if (result.UsedBed is not null && result.UsedBed.Id != bed?.Id)
+            {
+                result.UsedBed.PrinterId = null;
+                result.UsedBed.InsertedPrinter = null;
+                result.UsedBed = null;
+                await _context.SaveChangesAsync();
+            }
+
             result.Name = request.Name;
             result.AccessCode = request.AccessCode;
             result.PrinterType = request.PrinterType;
             result.IP = IPAddress.Parse(request.Ip);
             result.FirmwareVersion = request.FirmwareVersion;
             result.PrintingHours = request.PrintingHours ?? result.PrintingHours;
-            result.BedId = request.BedId;
 
-            _context.Printers.Update(result);
+            if (bed is not null)
+            {
+                bed.PrinterId = printerId;
+            }
+
+            if (nozzleIds is not null)
+            {
+                foreach (var nozzle in result.Nozzles.Where(item => !nozzleIds.Contains(item.Id)))
+                {
+                    nozzle.PrinterId = null;
+                }
+
+                foreach (var nozzle in nozzles!)
+                {
+                    nozzle.PrinterId = printerId;
+                }
+            }
+
+            if (filamentIds is not null)
+            {
+                foreach (var filament in result.LoadedFilaments.Where(item => !filamentIds.Contains(item.Id)))
+                {
+                    filament.PrinterId = null;
+                }
+
+                foreach (var filament in filaments!)
+                {
+                    filament.PrinterId = printerId;
+                }
+            }
+
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             this._logger.LogInformation("PrinterController - Printer successfully updated.");
             return this.Ok();
         }
         catch(Exception ex) {
+            await transaction.RollbackAsync();
             this._logger.LogError("PrinterController - Error during updating of printer {id}. Exception message: {message}", id, ex.Message);
             return this.Problem(ex.Message);
         }
@@ -302,7 +450,16 @@ public class PrinterController : ControllerBase
     {
         // Add Auth when needed
         this._logger.LogInformation("PrinterController - Deleting printer with id: {name}", id);
-        var result = _context.Printers.Where((printer) => printer.Id.CompareTo(Guid.Parse(id)) == 0).SingleOrDefault();
+        if (!Guid.TryParse(id, out var printerId))
+        {
+            return this.BadRequest();
+        }
+
+        var result = await _context.Printers
+            .Include(printer => printer.Nozzles)
+            .Include(printer => printer.LoadedFilaments)
+            .Include(printer => printer.UsedBed)
+            .SingleOrDefaultAsync(printer => printer.Id == printerId);
 
         if(result is null)
         {
@@ -310,15 +467,36 @@ public class PrinterController : ControllerBase
             return this.NotFound();
         }
 
+        await using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
+            foreach (var nozzle in result.Nozzles)
+            {
+                nozzle.PrinterId = null;
+            }
+
+            foreach (var filament in result.LoadedFilaments)
+            {
+                filament.PrinterId = null;
+            }
+
+            if (result.UsedBed is not null)
+            {
+                result.UsedBed.PrinterId = null;
+                result.UsedBed.InsertedPrinter = null;
+                result.UsedBed = null;
+            }
+
+            await _context.SaveChangesAsync();
             _context.Printers.Remove(result);
             await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
 
             this._logger.LogInformation("PrinterController - Printer successfully deleted.");
             return this.Ok();
         }
         catch(Exception ex) {
+            await transaction.RollbackAsync();
             this._logger.LogError("PrinterController - Error during deletion of printer {id}. Exception message: {message}", id, ex.Message);
             return this.Problem(ex.Message);
         }

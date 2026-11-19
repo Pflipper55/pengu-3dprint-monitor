@@ -17,6 +17,7 @@ import { PrinterTypePipe } from '../../pipes/printer-type-pipe';
 import { NozzleTypePipe } from '../../pipes/nozzle-type-pipe';
 import { NozzleHardenedPipe } from '../../pipes/nozzle-hardened-pipe';
 import { FilamentTypePipe } from '../../pipes/filament-type-pipe';
+import { BedTypePipe } from '../../pipes/bed-type-pipe';
 
 @Component({
   imports: [
@@ -27,6 +28,7 @@ import { FilamentTypePipe } from '../../pipes/filament-type-pipe';
     NozzleTypePipe,
     NozzleHardenedPipe,
     FilamentTypePipe,
+    BedTypePipe,
   ],
   selector: 'app-printer-details-modal',
   templateUrl: './printer-details-modal.html',

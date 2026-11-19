@@ -1,0 +1,207 @@
+<p-dialog
+  header="Edit printer"
+  [appendTo]="'body'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '30rem' }"
+>
+  <form [formGroup]="form" class="flex flex-col gap-4" (ngSubmit)="updatePrinter()">
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <input
+          pInputText
+          id="edit-printer-name"
+          formControlName="name"
+          [invalid]="form.controls.name.touched && form.controls.name.invalid"
+          fluid
+        />
+        <label for="edit-printer-name">Name</label>
+      </p-iftalabel>
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <small class="text-red-600">Name is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-select
+          inputId="edit-printer-type"
+          formControlName="printerType"
+          [options]="printerTypes"
+          [invalid]="form.controls.printerType.touched && form.controls.printerType.invalid"
+          [fluid]="true"
+        >
+          <ng-template #item let-printerType>
+            {{ printerType | printerType }}
+          </ng-template>
+          <ng-template #selectedItem let-printerType>
+            {{ printerType | printerType }}
+          </ng-template>
+        </p-select>
+        <label for="edit-printer-type">Type of printer</label>
+      </p-iftalabel>
+      @if (form.controls.printerType.touched && form.controls.printerType.invalid) {
+        <small class="text-red-600">Printer type is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <input
+          pInputText
+          id="edit-printer-ip"
+          formControlName="ip"
+          [invalid]="form.controls.ip.touched && form.controls.ip.invalid"
+          fluid
+        />
+        <label for="edit-printer-ip">IP address</label>
+      </p-iftalabel>
+      @if (form.controls.ip.touched && form.controls.ip.invalid) {
+        <small class="text-red-600">IP address is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <input
+          pInputText
+          id="edit-printer-access-code"
+          formControlName="accessCode"
+          [invalid]="form.controls.accessCode.touched && form.controls.accessCode.invalid"
+          fluid
+        />
+        <label for="edit-printer-access-code">Access code</label>
+      </p-iftalabel>
+      @if (form.controls.accessCode.touched && form.controls.accessCode.invalid) {
+        <small class="text-red-600">Access code is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <input
+          pInputText
+          id="edit-printer-firmware"
+          formControlName="firmwareVersion"
+          [invalid]="form.controls.firmwareVersion.touched && form.controls.firmwareVersion.invalid"
+          fluid
+        />
+        <label for="edit-printer-firmware">Firmware version</label>
+      </p-iftalabel>
+      @if (form.controls.firmwareVersion.touched && form.controls.firmwareVersion.invalid) {
+        <small class="text-red-600">Firmware version is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-inputnumber
+          inputId="edit-printer-printing-hours"
+          formControlName="printingHours"
+          [min]="0"
+          [invalid]="
+            form.controls.printingHours.touched && form.controls.printingHours.hasError('min')
+          "
+          [fluid]="true"
+        />
+        <label for="edit-printer-printing-hours">Printing hours</label>
+      </p-iftalabel>
+      @if (form.controls.printingHours.touched && form.controls.printingHours.hasError('min')) {
+        <small class="text-red-600">Printing hours cannot be negative.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-select
+          inputId="edit-printer-bed"
+          formControlName="bedId"
+          [options]="availableBeds"
+          optionLabel="brandName"
+          optionValue="id"
+          [showClear]="true"
+          [loading]="loading"
+          [fluid]="true"
+          [appendTo]="'body'"
+          [placeholder]="loading ? 'Loading beds...' : 'No bed selected'"
+        >
+          <ng-template #item let-bed>
+            {{ bed.brandName }} · {{ bed.bedType | bedType }}
+          </ng-template>
+          <ng-template #selectedItem let-bed>
+            {{ bed.brandName }} · {{ bed.bedType | bedType }}
+          </ng-template>
+        </p-select>
+        <label for="edit-printer-bed">Bed</label>
+      </p-iftalabel>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-multiselect
+          inputId="edit-printer-nozzles"
+          formControlName="nozzles"
+          [options]="availableNozzles"
+          optionLabel="nozzleType"
+          dataKey="id"
+          display="chip"
+          [filter]="true"
+          [loading]="loading"
+          [fluid]="true"
+          [appendTo]="'body'"
+          placeholder="Select nozzles"
+        >
+          <ng-template #item let-nozzle>
+            {{ nozzle.nozzleType | nozzleType }} · {{ nozzle.isHardened | nozzleHardened }}
+          </ng-template>
+          <ng-template #selecteditems let-nozzles>
+            @for (nozzle of nozzles; track nozzle.id; let last = $last) {
+              {{ nozzle.nozzleType | nozzleType }} · {{ nozzle.isHardened | nozzleHardened
+              }}{{ last ? '' : ', ' }}
+            }
+          </ng-template>
+        </p-multiselect>
+        <label for="edit-printer-nozzles">Nozzles</label>
+      </p-iftalabel>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-multiselect
+          inputId="edit-printer-filaments"
+          formControlName="filaments"
+          [options]="availableFilaments"
+          optionLabel="brandName"
+          dataKey="id"
+          display="chip"
+          [filter]="true"
+          [loading]="loading"
+          [fluid]="true"
+          [appendTo]="'body'"
+          emptyMessage="No unassigned filaments are available"
+          placeholder="Select filaments"
+        >
+          <ng-template #item let-filament>
+            {{ filament.brandName }} · {{ filament.filamentType | filamentType }} ·
+            {{ filament.weight }} g · {{ filament.colorCode }}
+          </ng-template>
+          <ng-template #selecteditems let-filaments>
+            @for (filament of filaments; track filament.id; let last = $last) {
+              {{ filament.brandName }} · {{ filament.filamentType | filamentType }} ·
+              {{ filament.weight }} g · {{ filament.colorCode }}{{ last ? '' : ', ' }}
+            }
+          </ng-template>
+        </p-multiselect>
+        <label for="edit-printer-filaments">Filaments</label>
+      </p-iftalabel>
+      @if (!loading && availableFilaments.length === 0) {
+        <small class="text-slate-500">No unassigned filaments are available.</small>
+      }
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (onClick)="hide()" />
+    <p-button label="Save changes" [disabled]="submitting || loading" (onClick)="updatePrinter()" />
+  </ng-template>
+</p-dialog>
