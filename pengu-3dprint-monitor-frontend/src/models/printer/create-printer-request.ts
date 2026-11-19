@@ -7,4 +7,7 @@ export interface CreatePrinterRequest {
   accessCode: string;
   firmwareVersion: string;
   printingHours?: number | null;
+  bedId?: string | null;
+  nozzleIds: string[];
+  filamentIds: string[];
 }

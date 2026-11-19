@@ -107,34 +107,137 @@ public class PrinterController : ControllerBase
 
     [HttpPost("create", Name = "CreatePrinter")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType((int)HttpStatusCode.BadRequest)]
     [ProducesResponseType((int)HttpStatusCode.Conflict)]
-    public async Task<ActionResult> Create(CreatePrinterRequest request)
+    public async Task<ActionResult> Create(
+        CreatePrinterRequest request,
+        CancellationToken cancellationToken)
     {
         // Add Auth when needed
         this._logger.LogInformation("PrinterController - Creating printer with name: {name}", request.Name);
-        var result = _context.Printers.Where((printer) => string.Compare(request.Name, printer.Name) == 0 
-            || printer.IP.Equals(request.Ip)) 
-            .Select((printer) => new PrinterOverviewModel()
-        {
-            Id = printer.Id,
-            Name = printer.Name,
-            Ip = printer.IP.ToString(),
-            FirmwareVersion = printer.FirmwareVersion,
-            PrinterType = printer.PrinterType,
-        }).ToList();
+        var printerExists = await _context.Printers.AnyAsync(
+            printer => string.Compare(request.Name, printer.Name) == 0
+                || printer.IP.Equals(request.Ip),
+            cancellationToken);
 
-        if(result.Any())
+        if (printerExists)
         {
             this._logger.LogError("PrinterController - there is already a printer with the name {name} or ip {ip}!", request.Name, request.Ip);
-            return this.Conflict();
+            return this.Conflict(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.Conflict,
+                Title = "Printer already exists",
+                Detail = "A printer with this name or IP address already exists."
+            });
+        }
+
+        var nozzleIds = request.NozzleIds ?? [];
+        var filamentIds = request.FilamentIds ?? [];
+        if (nozzleIds.Count != nozzleIds.Distinct().Count()
+            || filamentIds.Count != filamentIds.Distinct().Count())
+        {
+            return this.BadRequest(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "Duplicate inventory selection",
+                Detail = "Nozzle and filament IDs must be unique."
+            });
+        }
+
+        var bed = request.BedId.HasValue
+            ? await _context.Beds.SingleOrDefaultAsync(
+                item => item.Id == request.BedId.Value,
+                cancellationToken)
+            : null;
+
+        if (request.BedId.HasValue && bed is null)
+        {
+            return this.BadRequest(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "Bed not found",
+                Detail = "The selected bed does not exist."
+            });
+        }
+
+        if (bed?.PrinterId is not null)
+        {
+            return this.Conflict(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.Conflict,
+                Title = "Bed already assigned",
+                Detail = "The selected bed is already assigned to a printer."
+            });
+        }
+
+        var nozzles = await _context.Nozzles
+            .Where(item => nozzleIds.Contains(item.Id))
+            .ToListAsync(cancellationToken);
+
+        if (nozzles.Count != nozzleIds.Count)
+        {
+            return this.BadRequest(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "Nozzle not found",
+                Detail = "One or more selected nozzles do not exist."
+            });
+        }
+
+        if (nozzles.Any(item => item.PrinterId is not null))
+        {
+            return this.Conflict(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.Conflict,
+                Title = "Nozzle already assigned",
+                Detail = "One or more selected nozzles are already assigned to a printer."
+            });
+        }
+
+        var filaments = await _context.Filaments
+            .Where(item => filamentIds.Contains(item.Id))
+            .ToListAsync(cancellationToken);
+
+        if (filaments.Count != filamentIds.Count)
+        {
+            return this.BadRequest(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.BadRequest,
+                Title = "Filament not found",
+                Detail = "One or more selected filaments do not exist."
+            });
+        }
+
+        if (filaments.Any(item => item.PrinterId is not null))
+        {
+            return this.Conflict(new ProblemDetails
+            {
+                Status = (int)HttpStatusCode.Conflict,
+                Title = "Filament already assigned",
+                Detail = "One or more selected filaments are already assigned to a printer."
+            });
         }
 
         var entity = PrinterFactory.Create(request);
+        if (bed is not null)
+        {
+            bed.PrinterId = entity.Id;
+        }
+
+        foreach (var nozzle in nozzles)
+        {
+            nozzle.PrinterId = entity.Id;
+        }
+
+        foreach (var filament in filaments)
+        {
+            filament.PrinterId = entity.Id;
+        }
 
         try
         {
             _context.Printers.Add(entity);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
 
             this._logger.LogInformation("PrinterController - Printer successfully added.");
             return this.Ok();

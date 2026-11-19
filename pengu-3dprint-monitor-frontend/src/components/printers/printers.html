@@ -4,7 +4,7 @@
       <h2 id="printers-title" class="text-xl font-semibold">Printers</h2>
       <p class="mt-1 text-sm text-slate-600">View your printers.</p>
     </div>
-    <p-button label="Add printer" />
+    <p-button label="Add printer" (onClick)="showCreatePrinter()" />
   </div>
 
   <p-table [value]="printers()" [tableStyle]="{ 'min-width': '50rem' }">
@@ -64,4 +64,6 @@
     </ng-template>
   </p-table>
   <app-printer-details-modal></app-printer-details-modal>
+  <app-create-printer-modal (printerCreated)="loadPrinters()"></app-create-printer-modal>
+  <p-toast />
 </div>

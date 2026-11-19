@@ -4,14 +4,17 @@ import Aura from '@openng/optimus-ui-themes/aura';
 export const AppTheme = definePreset(Aura, {
   primitive: {
     customPrimary: {
-      DEFAULT: '#00A676',       '500': '#00A676',
+      DEFAULT: '#00A676',
+      '500': '#00A676',
     },
     customSecondary: {
-      DEFAULT: '#222222',       '500': '#222222',
+      DEFAULT: '#222222',
+      '500': '#222222',
     },
     customSurface: {
-      DEFAULT: '#FFFFFF',       '500': '#FFFFFF',
-    }
+      DEFAULT: '#FFFFFF',
+      '500': '#FFFFFF',
+    },
   },
   semantic: {
     primary: {
@@ -66,6 +69,20 @@ export const AppTheme = definePreset(Aura, {
           hoverColor: '{customSecondary.DEFAULT}',
           activeColor: '{customSecondary.DEFAULT}',
         },
+      },
+    },
+  },
+  components: {
+    select: {
+      option: {
+        selectedColor: '{primary.contrastColor}',
+        selectedFocusColor: '{primary.contrastColor}',
+      },
+    },
+    multiselect: {
+      option: {
+        selectedColor: '{primary.contrastColor}',
+        selectedFocusColor: '{primary.contrastColor}',
       },
     },
   },
