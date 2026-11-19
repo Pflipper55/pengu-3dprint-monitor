@@ -4,16 +4,89 @@
       <h2 id="nozzles-title" class="text-xl font-semibold">Nozzles</h2>
       <p class="mt-1 text-sm text-slate-600">View your nozzles.</p>
     </div>
-    <p-button label="Add nozzle" />
+    <p-button label="Add nozzle" (onClick)="showCreateNozzle()" />
   </div>
 
-  <p-table [value]="[]" [tableStyle]="{ 'min-width': '40rem' }">
+  <p-table
+    #nozzleTable
+    [value]="rows()"
+    [globalFilterFields]="['nozzleTypeLabel', 'hardenedLabel', 'printerName']"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [sortMode]="'multiple'"
+    [tableStyle]="{ 'min-width': '40rem' }"
+  >
+    <ng-template #caption>
+      <div class="flex justify-end pb-3">
+        <input
+          pInputText
+          type="text"
+          placeholder="Search nozzles"
+          aria-label="Search nozzles"
+          (input)="filterNozzles(nozzleTable, $event)"
+        />
+      </div>
+    </ng-template>
     <ng-template #header>
       <tr>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Nozzle type</th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Hardened</th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Printer</th>
+        <th
+          pSortableColumn="nozzleTypeLabel"
+          class="py-3 text-left text-sm font-semibold text-slate-600"
+        >
+          Nozzle type <p-sortIcon field="nozzleTypeLabel" />
+        </th>
+        <th
+          pSortableColumn="hardenedLabel"
+          class="py-3 text-left text-sm font-semibold text-slate-600"
+        >
+          Hardened <p-sortIcon field="hardenedLabel" />
+        </th>
+        <th
+          pSortableColumn="printerName"
+          class="py-3 text-left text-sm font-semibold text-slate-600"
+        >
+          Printer <p-sortIcon field="printerName" />
+        </th>
         <th class="py-3 text-left text-sm font-semibold text-slate-600">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-nozzle>
+      <tr>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ nozzle.nozzleType | nozzleType }}
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ nozzle.isHardened | nozzleHardened }}
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ nozzle.printerName }}
+        </td>
+        <td class="py-3">
+          <div class="flex items-center gap-2">
+            <p-button
+              icon="pi pi-info"
+              [size]="'small'"
+              [severity]="'info'"
+              [rounded]="true"
+              (onClick)="showNozzleDetails(nozzle)"
+            />
+            <p-button
+              icon="pi pi-pencil"
+              [size]="'small'"
+              [severity]="'secondary'"
+              [rounded]="true"
+              (onClick)="showEditNozzle(nozzle.id)"
+            />
+            <p-button
+              icon="pi pi-trash"
+              [size]="'small'"
+              [severity]="'danger'"
+              [rounded]="true"
+              (onClick)="confirmDeleteNozzle(nozzle)"
+            />
+          </div>
+        </td>
       </tr>
     </ng-template>
     <ng-template #emptymessage>
@@ -24,4 +97,9 @@
       </tr>
     </ng-template>
   </p-table>
+  <app-nozzle-details-modal />
+  <app-create-nozzle-modal (nozzleCreated)="loadNozzles()" />
+  <app-edit-nozzle-modal (nozzleUpdated)="loadNozzles()" />
+  <p-confirmDialog />
+  <p-toast />
 </div>

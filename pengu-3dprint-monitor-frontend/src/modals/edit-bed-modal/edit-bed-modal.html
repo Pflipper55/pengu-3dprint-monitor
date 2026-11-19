@@ -1,0 +1,68 @@
+<p-dialog
+  header="Edit bed"
+  [appendTo]="'body'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '30rem' }"
+>
+  <form [formGroup]="form" class="flex flex-col gap-4" (ngSubmit)="updateBed()">
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <input
+          pInputText
+          id="edit-bed-brand"
+          formControlName="brandName"
+          [invalid]="form.controls.brandName.touched && form.controls.brandName.invalid"
+          fluid
+        />
+        <label for="edit-bed-brand">Brand</label>
+      </p-iftalabel>
+      @if (form.controls.brandName.touched && form.controls.brandName.invalid) {
+        <small class="text-red-600">Brand is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-select
+          inputId="edit-bed-type"
+          formControlName="bedType"
+          [options]="bedTypes"
+          [invalid]="form.controls.bedType.touched && form.controls.bedType.invalid"
+          [fluid]="true"
+          [appendTo]="'body'"
+        >
+          <ng-template #item let-type>{{ type | bedType }}</ng-template>
+          <ng-template #selectedItem let-type>{{ type | bedType }}</ng-template>
+        </p-select>
+        <label for="edit-bed-type">Bed type</label>
+      </p-iftalabel>
+      @if (form.controls.bedType.touched && form.controls.bedType.invalid) {
+        <small class="text-red-600">Bed type is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-select
+          inputId="edit-bed-printer"
+          formControlName="printerId"
+          [options]="printers"
+          optionLabel="name"
+          optionValue="id"
+          [showClear]="true"
+          [loading]="loading"
+          [fluid]="true"
+          [appendTo]="'body'"
+          placeholder="No printer assigned"
+        />
+        <label for="edit-bed-printer">Printer (optional)</label>
+      </p-iftalabel>
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (onClick)="hide()" />
+    <p-button label="Save changes" [disabled]="loading || submitting" (onClick)="updateBed()" />
+  </ng-template>
+</p-dialog>

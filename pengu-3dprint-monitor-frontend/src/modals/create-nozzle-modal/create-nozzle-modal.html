@@ -1,0 +1,70 @@
+<p-dialog
+  header="Add nozzle"
+  [appendTo]="'body'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '30rem' }"
+>
+  <form [formGroup]="form" class="flex flex-col gap-4" (ngSubmit)="createNozzle()">
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-select
+          inputId="create-nozzle-type"
+          formControlName="nozzleType"
+          [options]="nozzleTypes"
+          [invalid]="form.controls.nozzleType.touched && form.controls.nozzleType.invalid"
+          [fluid]="true"
+        >
+          <ng-template #item let-type>{{ type | nozzleType }}</ng-template>
+          <ng-template #selectedItem let-type>{{ type | nozzleType }}</ng-template>
+        </p-select>
+        <label for="create-nozzle-type">Nozzle type</label>
+      </p-iftalabel>
+      @if (form.controls.nozzleType.touched && form.controls.nozzleType.invalid) {
+        <small class="text-red-600">Nozzle type is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-select
+          inputId="create-nozzle-hardened"
+          formControlName="isHardened"
+          [options]="hardenedOptions"
+          [invalid]="form.controls.isHardened.touched && form.controls.isHardened.invalid"
+          [fluid]="true"
+        >
+          <ng-template #item let-hardened>{{ hardened | nozzleHardened }}</ng-template>
+          <ng-template #selectedItem let-hardened>{{ hardened | nozzleHardened }}</ng-template>
+        </p-select>
+        <label for="create-nozzle-hardened">Hardened</label>
+      </p-iftalabel>
+      @if (form.controls.isHardened.touched && form.controls.isHardened.invalid) {
+        <small class="text-red-600">Choose whether the nozzle is hardened.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-select
+          inputId="create-nozzle-printer"
+          formControlName="printerId"
+          [options]="printers"
+          optionLabel="name"
+          optionValue="id"
+          [showClear]="true"
+          [loading]="loading"
+          [fluid]="true"
+          [appendTo]="'body'"
+          placeholder="No printer assigned"
+        />
+        <label for="create-nozzle-printer">Printer (optional)</label>
+      </p-iftalabel>
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (onClick)="hide()" />
+    <p-button label="Add nozzle" [disabled]="loading || submitting" (onClick)="createNozzle()" />
+  </ng-template>
+</p-dialog>

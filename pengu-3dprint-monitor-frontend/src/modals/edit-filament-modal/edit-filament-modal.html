@@ -1,0 +1,105 @@
+<p-dialog
+  header="Edit filament"
+  [appendTo]="'body'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '30rem' }"
+>
+  <form [formGroup]="form" class="flex flex-col gap-4" (ngSubmit)="updateFilament()">
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <input
+          pInputText
+          id="edit-filament-brand"
+          formControlName="brandName"
+          [invalid]="form.controls.brandName.touched && form.controls.brandName.invalid"
+          fluid
+        />
+        <label for="edit-filament-brand">Brand</label>
+      </p-iftalabel>
+      @if (form.controls.brandName.touched && form.controls.brandName.invalid) {
+        <small class="text-red-600">Brand is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-select
+          inputId="edit-filament-type"
+          formControlName="filamentType"
+          [options]="filamentTypes"
+          [invalid]="form.controls.filamentType.touched && form.controls.filamentType.invalid"
+          [fluid]="true"
+          [appendTo]="'body'"
+        >
+          <ng-template #item let-type>{{ type | filamentType }}</ng-template>
+          <ng-template #selectedItem let-type>{{ type | filamentType }}</ng-template>
+        </p-select>
+        <label for="edit-filament-type">Filament type</label>
+      </p-iftalabel>
+      @if (form.controls.filamentType.touched && form.controls.filamentType.invalid) {
+        <small class="text-red-600">Filament type is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-inputnumber
+          inputId="edit-filament-weight"
+          formControlName="weight"
+          [min]="0"
+          [invalid]="form.controls.weight.touched && form.controls.weight.invalid"
+          [fluid]="true"
+        />
+        <label for="edit-filament-weight">Weight (g)</label>
+      </p-iftalabel>
+      @if (form.controls.weight.touched && form.controls.weight.invalid) {
+        <small class="text-red-600">Enter a weight of zero or greater.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <input
+          pInputText
+          id="edit-filament-color"
+          formControlName="colorCode"
+          [invalid]="form.controls.colorCode.touched && form.controls.colorCode.invalid"
+          placeholder="#FFFFFF"
+          fluid
+        />
+        <label for="edit-filament-color">Color code</label>
+      </p-iftalabel>
+      @if (form.controls.colorCode.touched && form.controls.colorCode.invalid) {
+        <small class="text-red-600">Enter a six-digit hex color such as #FFFFFF.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-select
+          inputId="edit-filament-printer"
+          formControlName="printerId"
+          [options]="printers"
+          optionLabel="name"
+          optionValue="id"
+          [showClear]="true"
+          [loading]="loading"
+          [fluid]="true"
+          [appendTo]="'body'"
+          placeholder="No printer assigned"
+        />
+        <label for="edit-filament-printer">Printer (optional)</label>
+      </p-iftalabel>
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (onClick)="hide()" />
+    <p-button
+      label="Save changes"
+      [disabled]="loading || submitting"
+      (onClick)="updateFilament()"
+    />
+  </ng-template>
+</p-dialog>

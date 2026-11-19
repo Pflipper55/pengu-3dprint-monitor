@@ -1,0 +1,27 @@
+<p-dialog
+  header="Nozzle details"
+  [appendTo]="'body'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '25rem' }"
+>
+  @if (nozzle(); as item) {
+    <div class="flex flex-col divide-y divide-gray-300">
+      <div class="flex flex-row justify-between items-center py-2">
+        <p class="font-semibold">Nozzle type</p>
+        <p class="text-muted-color text-sm">{{ item.nozzleType | nozzleType }}</p>
+      </div>
+      <div class="flex flex-row justify-between items-center py-2">
+        <p class="font-semibold">Hardened</p>
+        <p class="text-muted-color text-sm">{{ item.isHardened | nozzleHardened }}</p>
+      </div>
+      <div class="flex flex-row justify-between items-center py-2">
+        <p class="font-semibold">Printer</p>
+        <p class="text-muted-color text-sm">{{ printerName }}</p>
+      </div>
+    </div>
+  }
+  <ng-template #footer>
+    <p-button label="Close" severity="secondary" (onClick)="hide()" />
+  </ng-template>
+</p-dialog>

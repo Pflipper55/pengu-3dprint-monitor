@@ -4,16 +4,86 @@
       <h2 id="beds-title" class="text-xl font-semibold">Beds</h2>
       <p class="mt-1 text-sm text-slate-600">View your beds.</p>
     </div>
-    <p-button label="Add bed" />
+    <p-button label="Add bed" (onClick)="showCreateBed()" />
   </div>
 
-  <p-table [value]="[]" [tableStyle]="{ 'min-width': '40rem' }">
+  <p-table
+    #bedTable
+    [value]="rows()"
+    [globalFilterFields]="['brandName', 'bedTypeLabel', 'printerName']"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [sortMode]="'multiple'"
+    [tableStyle]="{ 'min-width': '40rem' }"
+  >
+    <ng-template #caption>
+      <div class="flex justify-end pb-3">
+        <input
+          pInputText
+          type="text"
+          placeholder="Search beds"
+          aria-label="Search beds"
+          (input)="filterBeds(bedTable, $event)"
+        />
+      </div>
+    </ng-template>
     <ng-template #header>
       <tr>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Brand</th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Bed type</th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Printer</th>
+        <th pSortableColumn="brandName" class="py-3 text-left text-sm font-semibold text-slate-600">
+          Brand <p-sortIcon field="brandName" />
+        </th>
+        <th
+          pSortableColumn="bedTypeLabel"
+          class="py-3 text-left text-sm font-semibold text-slate-600"
+        >
+          Bed type <p-sortIcon field="bedTypeLabel" />
+        </th>
+        <th
+          pSortableColumn="printerName"
+          class="py-3 text-left text-sm font-semibold text-slate-600"
+        >
+          Printer <p-sortIcon field="printerName" />
+        </th>
         <th class="py-3 text-left text-sm font-semibold text-slate-600">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-bed>
+      <tr>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ bed.brandName }}
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ bed.bedType | bedType }}
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ bed.printerName }}
+        </td>
+        <td class="py-3">
+          <div class="flex items-center gap-2">
+            <p-button
+              icon="pi pi-info"
+              [size]="'small'"
+              [severity]="'info'"
+              [rounded]="true"
+              (onClick)="showBedDetails(bed)"
+            />
+            <p-button
+              icon="pi pi-pencil"
+              [size]="'small'"
+              [severity]="'secondary'"
+              [rounded]="true"
+              (onClick)="showEditBed(bed.id)"
+            />
+            <p-button
+              icon="pi pi-trash"
+              [size]="'small'"
+              [severity]="'danger'"
+              [rounded]="true"
+              (onClick)="confirmDeleteBed(bed)"
+            />
+          </div>
+        </td>
       </tr>
     </ng-template>
     <ng-template #emptymessage>
@@ -24,4 +94,9 @@
       </tr>
     </ng-template>
   </p-table>
+  <app-bed-details-modal />
+  <app-create-bed-modal (bedCreated)="loadBeds()" />
+  <app-edit-bed-modal (bedUpdated)="loadBeds()" />
+  <p-confirmDialog />
+  <p-toast />
 </div>

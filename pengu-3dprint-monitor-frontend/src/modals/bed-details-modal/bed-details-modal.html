@@ -1,0 +1,27 @@
+<p-dialog
+  header="Bed details"
+  [appendTo]="'body'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '25rem' }"
+>
+  @if (bed(); as item) {
+    <div class="flex flex-col divide-y divide-gray-300">
+      <div class="flex flex-row justify-between items-center py-2">
+        <p class="font-semibold">Brand</p>
+        <p class="text-muted-color text-sm">{{ item.brandName }}</p>
+      </div>
+      <div class="flex flex-row justify-between items-center py-2">
+        <p class="font-semibold">Bed type</p>
+        <p class="text-muted-color text-sm">{{ item.bedType | bedType }}</p>
+      </div>
+      <div class="flex flex-row justify-between items-center py-2">
+        <p class="font-semibold">Printer</p>
+        <p class="text-muted-color text-sm">{{ printerName }}</p>
+      </div>
+    </div>
+  }
+  <ng-template #footer>
+    <p-button label="Close" severity="secondary" (onClick)="hide()" />
+  </ng-template>
+</p-dialog>

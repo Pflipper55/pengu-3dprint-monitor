@@ -1,0 +1,41 @@
+<p-dialog
+  header="Filament details"
+  [appendTo]="'body'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '25rem' }"
+>
+  @if (filament(); as item) {
+    <div class="flex flex-col divide-y divide-gray-300">
+      <div class="flex flex-row justify-between items-center py-2">
+        <p class="font-semibold">Brand</p>
+        <p class="text-muted-color text-sm">{{ item.brandName }}</p>
+      </div>
+      <div class="flex flex-row justify-between items-center py-2">
+        <p class="font-semibold">Filament type</p>
+        <p class="text-muted-color text-sm">{{ item.filamentType | filamentType }}</p>
+      </div>
+      <div class="flex flex-row justify-between items-center py-2">
+        <p class="font-semibold">Weight</p>
+        <p class="text-muted-color text-sm">{{ item.weight }} g</p>
+      </div>
+      <div class="flex flex-row justify-between items-center py-2">
+        <p class="font-semibold">Color</p>
+        <div class="flex items-center gap-2">
+          <span
+            class="h-4 w-4 rounded-full border border-surface-300"
+            [style.backgroundColor]="item.colorCode"
+          ></span>
+          <p class="text-muted-color text-sm">{{ item.colorCode }}</p>
+        </div>
+      </div>
+      <div class="flex flex-row justify-between items-center py-2">
+        <p class="font-semibold">Printer</p>
+        <p class="text-muted-color text-sm">{{ printerName }}</p>
+      </div>
+    </div>
+  }
+  <ng-template #footer>
+    <p-button label="Close" severity="secondary" (onClick)="hide()" />
+  </ng-template>
+</p-dialog>

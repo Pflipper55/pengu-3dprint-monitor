@@ -1,0 +1,71 @@
+<p-dialog
+  header="Add bed"
+  [appendTo]="'body'"
+  [modal]="true"
+  [(visible)]="visible"
+  [style]="{ width: '30rem' }"
+>
+  <form [formGroup]="form" class="flex flex-col gap-4" (ngSubmit)="createBed()">
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <input
+          pInputText
+          id="create-bed-brand"
+          formControlName="brandName"
+          [invalid]="form.controls.brandName.touched && form.controls.brandName.invalid"
+          fluid
+        />
+        <label for="create-bed-brand">Brand</label>
+      </p-iftalabel>
+      @if (form.controls.brandName.touched && form.controls.brandName.invalid) {
+        <small class="text-red-600">Brand is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-select
+          inputId="create-bed-type"
+          formControlName="bedType"
+          [options]="bedTypes"
+          [invalid]="form.controls.bedType.touched && form.controls.bedType.invalid"
+          [fluid]="true"
+          [appendTo]="'body'"
+        >
+          <ng-template #item let-type>{{ type | bedType }}</ng-template>
+          <ng-template #selectedItem let-type>{{ type | bedType }}</ng-template>
+        </p-select>
+        <label for="create-bed-type">Bed type</label>
+      </p-iftalabel>
+      @if (form.controls.bedType.touched && form.controls.bedType.invalid) {
+        <small class="text-red-600">Bed type is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <p-select
+          inputId="create-bed-printer"
+          formControlName="printerId"
+          [options]="printers"
+          optionLabel="name"
+          optionValue="id"
+          [showClear]="true"
+          [loading]="loading"
+          [fluid]="true"
+          [appendTo]="'body'"
+          placeholder="No printer assigned"
+        />
+        <label for="create-bed-printer">Printer (optional)</label>
+      </p-iftalabel>
+      @if (!loading && printers.length === 0) {
+        <small class="text-slate-500">No printers without a bed are available.</small>
+      }
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (onClick)="hide()" />
+    <p-button label="Add bed" [disabled]="loading || submitting" (onClick)="createBed()" />
+  </ng-template>
+</p-dialog>

@@ -4,18 +4,104 @@
       <h2 id="filaments-title" class="text-xl font-semibold">Filaments</h2>
       <p class="mt-1 text-sm text-slate-600">View your filaments.</p>
     </div>
-    <p-button label="Add filament" />
+    <p-button label="Add filament" (onClick)="showCreateFilament()" />
   </div>
 
-  <p-table [value]="[]" [tableStyle]="{ 'min-width': '50rem' }">
+  <p-table
+    #filamentTable
+    [value]="rows()"
+    [globalFilterFields]="['brandName', 'filamentTypeLabel', 'weight', 'colorCode', 'printerName']"
+    [paginator]="true"
+    [rows]="10"
+    [rowsPerPageOptions]="[5, 10, 25]"
+    [sortMode]="'multiple'"
+    [tableStyle]="{ 'min-width': '50rem' }"
+  >
+    <ng-template #caption>
+      <div class="flex justify-end pb-3">
+        <input
+          pInputText
+          type="text"
+          placeholder="Search filaments"
+          aria-label="Search filaments"
+          (input)="filterFilaments(filamentTable, $event)"
+        />
+      </div>
+    </ng-template>
     <ng-template #header>
       <tr>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Brand</th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Filament type</th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Weight</th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Color</th>
-        <th class="py-3 text-left text-sm font-semibold text-slate-600">Printer</th>
+        <th pSortableColumn="brandName" class="py-3 text-left text-sm font-semibold text-slate-600">
+          Brand <p-sortIcon field="brandName" />
+        </th>
+        <th
+          pSortableColumn="filamentTypeLabel"
+          class="py-3 text-left text-sm font-semibold text-slate-600"
+        >
+          Filament type <p-sortIcon field="filamentTypeLabel" />
+        </th>
+        <th pSortableColumn="weight" class="py-3 text-left text-sm font-semibold text-slate-600">
+          Weight <p-sortIcon field="weight" />
+        </th>
+        <th pSortableColumn="colorCode" class="py-3 text-left text-sm font-semibold text-slate-600">
+          Color <p-sortIcon field="colorCode" />
+        </th>
+        <th
+          pSortableColumn="printerName"
+          class="py-3 text-left text-sm font-semibold text-slate-600"
+        >
+          Printer <p-sortIcon field="printerName" />
+        </th>
         <th class="py-3 text-left text-sm font-semibold text-slate-600">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template #body let-filament>
+      <tr>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ filament.brandName }}
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ filament.filamentType | filamentType }}
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ filament.weight }} g
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          <div class="flex items-center gap-2">
+            <span
+              class="h-4 w-4 rounded-full border border-surface-300"
+              [style.backgroundColor]="filament.colorCode"
+            ></span>
+            {{ filament.colorCode }}
+          </div>
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ filament.printerName }}
+        </td>
+        <td class="py-3">
+          <div class="flex items-center gap-2">
+            <p-button
+              icon="pi pi-info"
+              [size]="'small'"
+              [severity]="'info'"
+              [rounded]="true"
+              (onClick)="showFilamentDetails(filament)"
+            />
+            <p-button
+              icon="pi pi-pencil"
+              [size]="'small'"
+              [severity]="'secondary'"
+              [rounded]="true"
+              (onClick)="showEditFilament(filament.id)"
+            />
+            <p-button
+              icon="pi pi-trash"
+              [size]="'small'"
+              [severity]="'danger'"
+              [rounded]="true"
+              (onClick)="confirmDeleteFilament(filament)"
+            />
+          </div>
+        </td>
       </tr>
     </ng-template>
     <ng-template #emptymessage>
@@ -26,4 +112,9 @@
       </tr>
     </ng-template>
   </p-table>
+  <app-filament-details-modal />
+  <app-create-filament-modal (filamentCreated)="loadFilaments()" />
+  <app-edit-filament-modal (filamentUpdated)="loadFilaments()" />
+  <p-confirmDialog />
+  <p-toast />
 </div>
