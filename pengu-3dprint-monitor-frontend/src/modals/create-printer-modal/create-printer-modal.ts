@@ -63,6 +63,10 @@ export class CreatePrinterModal {
     printerType: new FormControl<EPrinterType | null>(null, Validators.required),
     ip: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     accessCode: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    serialNumber: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required],
+    }),
     firmwareVersion: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required],
@@ -93,6 +97,7 @@ export class CreatePrinterModal {
       printerType: null,
       ip: '',
       accessCode: '',
+      serialNumber: '',
       firmwareVersion: '',
       printingHours: null,
       bedId: null,
@@ -149,6 +154,7 @@ export class CreatePrinterModal {
       printerType: formValue.printerType,
       ip: formValue.ip.trim(),
       accessCode: formValue.accessCode.trim(),
+      serialNumber: formValue.serialNumber.trim(),
       firmwareVersion: formValue.firmwareVersion.trim(),
       printingHours: formValue.printingHours,
       bedId: formValue.bedId,

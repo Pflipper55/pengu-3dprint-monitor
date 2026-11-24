@@ -17,6 +17,7 @@
     "@angular/forms": "^22.2.6",
     "@angular/platform-browser": "^22.2.6",
     "@angular/router": "^22.2.6",
+    "@microsoft/signalr": "^10.0.11",
     "@openng/icons": "^1.0.0",
     "@openng/optimus-ui": "^2.0.2",
     "@openng/optimus-ui-tailwindcss": "^2.0.2",

@@ -9,6 +9,7 @@ export interface PrinterDetailsModel {
   printerType: EPrinterType;
   ip: string;
   accessCode: string;
+  serialNumber: string;
   printingHours: number;
   firmwareVersion: string;
   nozzles: NozzleOverviewModel[];

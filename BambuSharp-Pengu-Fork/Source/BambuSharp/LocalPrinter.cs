@@ -38,6 +38,8 @@ public class LocalPrinter : IDisposable, INotifyPropertyChanged
     /// </summary>
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    public event EventHandler? ReportReceived;
+
     /// <summary>
     /// Gets a value indicating whether the object has been disposed.
     /// </summary>
@@ -341,6 +343,8 @@ public class LocalPrinter : IDisposable, INotifyPropertyChanged
         {
             CloudStatus = null;
         }
+
+        ReportReceived?.Invoke(this, EventArgs.Empty);
     }
 
     protected virtual void Dispose(bool disposing)

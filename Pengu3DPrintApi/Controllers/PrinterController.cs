@@ -36,6 +36,7 @@ public class PrinterController : ControllerBase
             Id = printer.Id,
             Name = printer.Name,
             Ip = printer.IP.ToString(),
+            SerialNumber = printer.SerialNumber,
             FirmwareVersion = printer.FirmwareVersion,
             PrinterType = printer.PrinterType,
         }).ToList();
@@ -75,6 +76,7 @@ public class PrinterController : ControllerBase
             PrinterType = printer.PrinterType,
             Ip = printer.IP.ToString(),
             AccessCode = printer.AccessCode,
+            SerialNumber = printer.SerialNumber,
             PrintingHours = printer.PrintingHours,
             FirmwareVersion = printer.FirmwareVersion,
             Nozzles = printer.Nozzles.Select(nozzle => new NozzleOverviewModel
@@ -394,6 +396,7 @@ public class PrinterController : ControllerBase
 
             result.Name = request.Name;
             result.AccessCode = request.AccessCode;
+            result.SerialNumber = request.SerialNumber;
             result.PrinterType = request.PrinterType;
             result.IP = IPAddress.Parse(request.Ip);
             result.FirmwareVersion = request.FirmwareVersion;

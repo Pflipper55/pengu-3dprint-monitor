@@ -35,3 +35,29 @@ dotnet ef database update --project Pengu3DPrintApi
 ```
 
 Add entity types and corresponding `DbSet<T>` properties to `PenguMonitorDbContext` before creating migrations that include application tables.
+
+Apply pending schema migrations after updating the API:
+
+```sh
+dotnet ef database update --project Pengu3DPrintApi
+```
+
+## Live printer status
+
+The API monitors configured Bambu Lab printers over the local network using BambuSharp.
+The API host must be able to reach each printer on its MQTT port (8883). Connection
+settings, including the Bambu Lab serial number, are read from the database. Existing
+printers need their serial number added in the edit-printer dialog after applying the
+migration. The serial number and access code are not included in status events or logs.
+
+The SignalR hub is available at `/hubs/printer-status`. Clients can invoke
+`GetCurrentStatuses` for a snapshot and listen for:
+
+- `PrinterStatusChanged`: `{ id, status, version }`, where status is `Connecting`,
+  `Online`, or `Offline`.
+- `PrinterRemoved`: the ID of a printer removed from the database.
+
+`Online` means a printer report was received within the last 30 seconds. Failed or
+stale connections are retried every 10 seconds. Database changes are reconciled within
+10 seconds. The web application connects to this hub and displays status in the
+printers table; print-job telemetry is not included.

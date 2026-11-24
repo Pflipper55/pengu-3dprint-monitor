@@ -10,7 +10,7 @@
   <p-table
     #printerTable
     [value]="printers()"
-    [globalFilterFields]="['name', 'ip', 'firmwareVersion']"
+    [globalFilterFields]="['name', 'ip', 'serialNumber', 'firmwareVersion']"
     [paginator]="true"
     [rows]="10"
     [rowsPerPageOptions]="[5, 10, 25]"
@@ -44,11 +44,18 @@
           IP address <p-sortIcon field="ip" />
         </th>
         <th
+          pSortableColumn="serialNumber"
+          class="py-3 text-left text-sm font-semibold text-slate-600"
+        >
+          Serial number <p-sortIcon field="serialNumber" />
+        </th>
+        <th
           pSortableColumn="firmwareVersion"
           class="py-3 text-left text-sm font-semibold text-slate-600"
         >
           Firmware version <p-sortIcon field="firmwareVersion" />
         </th>
+        <th class="py-3 text-left text-sm font-semibold text-slate-600">Status</th>
         <th class="py-3 text-left text-sm font-semibold text-slate-600">Actions</th>
       </tr>
     </ng-template>
@@ -67,7 +74,26 @@
           {{ printer.ip }}
         </td>
         <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
+          {{ printer.serialNumber }}
+        </td>
+        <td class="py-3 text-sm font-medium text-surface-900 dark:text-surface-0">
           {{ printer.firmwareVersion }}
+        </td>
+        <td class="py-3">
+          @let status = printerStatusService.statuses()[printer.id] ?? 'Unknown';
+          <span
+            class="rounded-full px-2 py-1 text-xs font-semibold"
+            [class.bg-emerald-100]="status === 'Online'"
+            [class.text-emerald-800]="status === 'Online'"
+            [class.bg-red-100]="status === 'Offline'"
+            [class.text-red-800]="status === 'Offline'"
+            [class.bg-amber-100]="status === 'Connecting'"
+            [class.text-amber-800]="status === 'Connecting'"
+            [class.bg-slate-100]="status === 'Unknown'"
+            [class.text-slate-700]="status === 'Unknown'"
+          >
+            {{ status }}
+          </span>
         </td>
         <td class="py-3">
           <div class="flex items-center gap-2">
@@ -98,7 +124,7 @@
     </ng-template>
     <ng-template #emptymessage>
       <tr>
-        <td colspan="6" class="py-4 text-center text-sm text-slate-600">
+        <td colspan="8" class="py-4 text-center text-sm text-slate-600">
           No printers have been added yet.
         </td>
       </tr>

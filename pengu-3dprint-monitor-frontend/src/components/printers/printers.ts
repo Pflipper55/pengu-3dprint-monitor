@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   inject,
+  OnDestroy,
   OnInit,
   signal,
   ViewChild,
@@ -20,6 +21,7 @@ import { CreatePrinterModal } from '../../modals/create-printer-modal/create-pri
 import { EditPrinterModal } from '../../modals/edit-printer-modal/edit-printer-modal';
 import { ToastModule } from '@openng/optimus-ui/toast';
 import { HttpErrorResponse } from '@angular/common/http';
+import { PrinterStatusService } from '../../services/printer-status-service';
 
 @Component({
   selector: 'app-printers',
@@ -40,7 +42,7 @@ import { HttpErrorResponse } from '@angular/common/http';
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './printers.html',
 })
-export class Printers implements OnInit {
+export class Printers implements OnInit, OnDestroy {
   @ViewChild(PrinterDetailsModal) private printerDetailsModal!: PrinterDetailsModal;
   @ViewChild(CreatePrinterModal) private createPrinterModal!: CreatePrinterModal;
   @ViewChild(EditPrinterModal) private editPrinterModal!: EditPrinterModal;
@@ -48,11 +50,17 @@ export class Printers implements OnInit {
   public printers = signal<PrinterOverviewModel[]>([]);
 
   private printerApiService = inject(ApiPrinterService);
+  public readonly printerStatusService = inject(PrinterStatusService);
   private readonly confirmationService = inject(ConfirmationService);
   private readonly messageService = inject(MessageService);
 
   public ngOnInit(): void {
     this.loadPrinters();
+    this.printerStatusService.connect();
+  }
+
+  public ngOnDestroy(): void {
+    this.printerStatusService.disconnect();
   }
 
   public loadPrinters(): void {

@@ -127,6 +127,10 @@ namespace Pengu3DPrintApi.Migrations
                     b.Property<int>("PrintingHours")
                         .HasColumnType("integer");
 
+                    b.Property<string>("SerialNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.HasKey("Id");
 
                     b.ToTable("Printers");

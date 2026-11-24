@@ -15,6 +15,8 @@ public class Printer
 
     public string AccessCode { get; set; } = string.Empty;
 
+    public string SerialNumber { get; set; } = string.Empty;
+
     public string FirmwareVersion { get; set;} = string.Empty;
 
     public int PrintingHours { get; set; } = 0;
@@ -32,13 +34,21 @@ public class Printer
         
     }
 
-    public Printer(string name, EPrinterType ePrinterType, IPAddress iPAddress, string accessCode, string firmwareVersion, int printingHours = 0)
+    public Printer(
+        string name,
+        EPrinterType ePrinterType,
+        IPAddress iPAddress,
+        string accessCode,
+        string serialNumber,
+        string firmwareVersion,
+        int printingHours = 0)
     {
         this.Id = Guid.NewGuid();
         this.Name = name;
         this.PrinterType = ePrinterType;
         this.IP = iPAddress;
         this.AccessCode = accessCode;
+        this.SerialNumber = serialNumber;
         this.PrintingHours = printingHours;
         this.FirmwareVersion = firmwareVersion;
     }

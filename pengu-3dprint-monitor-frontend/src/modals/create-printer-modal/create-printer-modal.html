@@ -171,6 +171,22 @@
       <p-iftalabel>
         <input
           pInputText
+          id="printer-serial-number"
+          formControlName="serialNumber"
+          [invalid]="form.controls.serialNumber.touched && form.controls.serialNumber.invalid"
+          fluid
+        />
+        <label for="printer-serial-number">Bambu Lab serial number</label>
+      </p-iftalabel>
+      @if (form.controls.serialNumber.touched && form.controls.serialNumber.invalid) {
+        <small class="text-red-600">Serial number is required for MQTT monitoring.</small>
+      }
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <p-iftalabel>
+        <input
+          pInputText
           id="printer-firmware"
           formControlName="firmwareVersion"
           [invalid]="form.controls.firmwareVersion.touched && form.controls.firmwareVersion.invalid"

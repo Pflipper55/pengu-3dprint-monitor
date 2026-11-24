@@ -5,5 +5,6 @@ export interface PrinterOverviewModel {
   name: string;
   printerType: EPrinterType;
   ip: string;
+  serialNumber: string;
   firmwareVersion: string;
 }

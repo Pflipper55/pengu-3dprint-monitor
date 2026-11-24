@@ -14,6 +14,8 @@ public class PrinterDetailsModel
 
     public string AccessCode { get; set; } = string.Empty;
 
+    public string SerialNumber { get; set; } = string.Empty;
+
     public int PrintingHours { get; set; }
 
     public string FirmwareVersion { get; set; } = string.Empty;

@@ -42,8 +42,8 @@ services:
 
   api:
     build:
-      context: ./Pengu3DPrintApi
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Pengu3DPrintApi/Dockerfile
     image: pengu3dprintmonitorapi:latest
     container_name: pengu_3dprint_monitor_api
     env_file:

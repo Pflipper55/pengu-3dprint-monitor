@@ -5,6 +5,7 @@ export interface UpdatePrinterRequest {
   printerType: EPrinterType;
   ip: string;
   accessCode: string;
+  serialNumber: string;
   firmwareVersion: string;
   printingHours?: number | null;
   bedId?: string | null;

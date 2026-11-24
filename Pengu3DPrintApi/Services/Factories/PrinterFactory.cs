@@ -8,6 +8,13 @@ public abstract class PrinterFactory
 {
     public static Printer Create(CreatePrinterRequest request)
     {
-        return new Printer(request.Name, request.PrinterType, IPAddress.Parse(request.Ip), request.AccessCode, request.FirmwareVersion, request.PrintingHours ?? 0);
+        return new Printer(
+            request.Name,
+            request.PrinterType,
+            IPAddress.Parse(request.Ip),
+            request.AccessCode,
+            request.SerialNumber,
+            request.FirmwareVersion,
+            request.PrintingHours ?? 0);
     }
 }
